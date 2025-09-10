@@ -133,7 +133,7 @@ class clientService {
       var job = validator.trim(job);
       var level = validator.trim(level);
       var name = validator.trim(name);
-      var age = parseInt(age);
+      var age = parseInt(age, 10);
 
       if (name === "" || !name) {
         throw new Error("Invalid name.");
