@@ -2,6 +2,7 @@ import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import RefreshTokenRepo from "../Repositories/RfshTokenRepo.js";
 import ClientRepo from "../Repositories/ClientRepo.js";
+import mailService from "./MailSV.js";
 import validator from "validator";
 import { ComparePass, cryptoHash } from "../utils/hashUtils.js";
 import getToken from "../utils/getToken.js";
@@ -33,7 +34,7 @@ class authService {
         const payload = {
           id: client._id,
           email: client.email,
-        }
+        };
 
         const acessToken = jwt.sign(payload, process.env.JWT_SECRET, {
           expiresIn: "15m",
@@ -59,7 +60,6 @@ class authService {
           acessToken: acessToken,
           rawToken: rawToken,
         };
-
       } else {
         throw new Error("Invalid credentials.");
       }
@@ -150,6 +150,119 @@ class authService {
         return deletedToken;
       } else {
         throw new Error("Fail to delete token");
+      }
+    } catch (err) {
+      throw new Error(err.message);
+    }
+  }
+
+  async sendEmail(req) {
+    try {
+      const { email } = req.body;
+      const device = req.headers["user-agent"];
+
+      if (!device) {
+        throw new Error("Not identified device.");
+      }
+
+      if (!validator.isEmail(email)) {
+        throw new Error("Invalid email.");
+      }
+
+      const user = await ClientRepo.findEmail(email);
+
+      if (!user) {
+        throw new Error("User was not found");
+      }
+
+      const { sent, code } = await mailService.sendEmail(email);
+
+      const newRawToken = crypto.randomBytes(40).toString("hex");
+      const newHashedToken = cryptoHash(newRawToken);
+
+      if (sent.accepted) {
+        const refreshTk = await RefreshTokenRepo.saveToken({
+          userId: user._id,
+          userEmail: user.email,
+          token: newHashedToken,
+          device,
+          recoveryCode: code,
+          expiresAt: new Date(Date.now(5 * 60 * 1000)),
+        });
+
+        return {
+          refreshTk,
+          newRawToken,
+          sent,
+        };
+      } else {
+        throw new Error("failed.");
+      }
+    } catch (err) {
+      throw new Error(err.message);
+    }
+  }
+
+  async verifyCode(req) {
+    try {
+      const { code } = req.body;
+      const token = getToken(req);
+
+      if (!token) {
+        throw new Error("Missing token.");
+      }
+
+      const hashedToken = cryptoHash(token);
+
+      const userToken = await RefreshTokenRepo.findByToken(hashedToken);
+
+      if (!userToken) {
+        throw new Error("");
+      }
+
+      if (code === userToken.recoveryCode) {
+        const payload = {
+          id: userToken.userId,
+          email: userToken.userEmail,
+        };
+
+        const acessTk = jwt.sign(payload, process.env.JWT_SECRET, {
+          expiresIn: "3m",
+        });
+
+        return acessTk;
+      } else {
+        throw new Error("Invalid code.");
+      }
+    } catch (err) {
+      throw new Error(err.message);
+    }
+  }
+
+  async resetPassword(req) {
+    try {
+      const { password } = req.body;
+
+      if (!validator.isStrongPassword(password)) {
+        throw new Error("Weak password");
+      }
+
+      const passwordHash = cryptoHash(password);
+
+      const user = await ClientRepo.update(req.user.id, {
+        passwordHash: passwordHash,
+      });
+
+      if (user) {
+        const discartTk = await RefreshTokenRepo.destroyManyTokens(req.user.id);
+
+        return {
+          id: user._id,
+          email: user.email,
+          discartTk,
+        };
+      } else {
+        throw new Error("User was not found.");
       }
     } catch (err) {
       throw new Error(err.message);

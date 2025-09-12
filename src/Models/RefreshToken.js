@@ -9,6 +9,10 @@ const RefreshTokenSchema = new Schema({
   userEmail: String,
   device: String,
   token: String,
+  recoveryCode: {
+    type: Number,
+    default: undefined,
+  },
   createdAt: {
     type: Date,
     default: Date.now()
