@@ -53,3 +53,17 @@
 
 - Necessita de autenticação (Login/Refresh);
 - Encerra todas as sessões do usuário;
+
+### POST ("/recover-mail")
+
+- Envia email com o código de recuperação de acesso (consultar as variáveis de ambiente (.env));
+
+### POST ("/recover-mail/valid")
+
+- Endpoint para confirmação do código que foi enviado no email;
+
+### PUT ("/reset-password")
+
+- Necessita de autenticação;
+
+- Pede a nova senha;

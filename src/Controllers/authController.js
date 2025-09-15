@@ -97,7 +97,7 @@ class authController {
       const confirm = await authService.resetPassword(req);
 
       if (confirm) {
-        res.status(200).json({success: "Password succesfuly renamed"});
+        res.status(200).json(confirm);
       } else {
         res.status(500).json({ error: "fudeu" });
       }

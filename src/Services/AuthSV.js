@@ -6,6 +6,7 @@ import mailService from "./MailSV.js";
 import validator from "validator";
 import { ComparePass, cryptoHash } from "../utils/hashUtils.js";
 import getToken from "../utils/getToken.js";
+import bcrypt from 'bcrypt';
 
 class authService {
   //Login
@@ -28,7 +29,7 @@ class authService {
         throw new Error("The user does not exists");
       }
 
-      const user = await ComparePass(password, client.passwordHash);
+      const user = ComparePass(password, client.passwordHash);
 
       if (user) {
         const payload = {
@@ -187,7 +188,7 @@ class authService {
           token: newHashedToken,
           device,
           recoveryCode: code,
-          expiresAt: new Date(Date.now(5 * 60 * 1000)),
+          expiresAt: new Date(Date.now() + 5 * 60 * 1000),
         });
 
         return {
@@ -259,6 +260,7 @@ class authService {
         return {
           id: user._id,
           email: user.email,
+          newPass: password,
           discartTk,
         };
       } else {

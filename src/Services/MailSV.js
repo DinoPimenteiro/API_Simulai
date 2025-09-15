@@ -2,7 +2,7 @@ import transporter from "../config/mailConfig.js";
 
 class mailService {
   async sendEmail(userMail) {
-    const code = parseInt(Math.random() * 9999);
+    const code = Math.floor(1000 + Math.random() * 9000);
 
     const body = {
       from: process.env.CLIENT_ID,

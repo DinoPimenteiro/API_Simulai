@@ -9,7 +9,7 @@ async function PassHash(passw) {
 }
 
 async function ComparePass(passw, hash) {
-  const comp = bcrypt.compare(passw, hash);
+  const comp = await bcrypt.compare(passw, hash);
   return comp;
 }
 

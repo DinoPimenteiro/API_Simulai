@@ -211,14 +211,18 @@ class clientService {
       const userComment = await ClientRepo.save({
         comment: { body, title, rating, type },
       });
-      return ({
+      return {
         name: userComment.name,
         email: userComment.email,
         comments: userComment.comment,
-      });
+      };
     } catch (err) {
       throw new Error(err.message);
     }
+  }
+
+  // Pesquisa para agregar/completar o cadastro do usuário;
+  async research(req) { 
   }
 }
 
