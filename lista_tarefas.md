@@ -6,7 +6,7 @@
 - Achar uma forma segura para criar administradores;
 - Colocar sob controle do admin todos os recursos descritos na documentação.
 
-# Lembretes
+## Lembretes
 
 - Manter sempre a documentação atualizada e organizada para que o frontend, tanto o do mobile quanto o web, consiga realizar as requisições necessárias. Fornecer se o endpoint (rota) tem algum middleware, o que a rota retorna, o que ela necessita, quais erros ela pode retornar e outras coisas que podem ser consideradas como importante.
 
