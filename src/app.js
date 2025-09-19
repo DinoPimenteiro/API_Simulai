@@ -1,11 +1,19 @@
 import e from 'express';
-import routes from './routes.js';
 import cookieParser from 'cookie-parser';
+import userRouter from './routes/userRoutes.js';
+import mailRouter from './routes/mailRoutes.js';
+import authRouter from './routes/authRoutes.js';
 
 const app = e();
 
+// Config
 app.use(e.json());
 app.use(cookieParser());
-app.use(routes)
+
+// Rotas
+app.use(userRouter)
+app.use(mailRouter)
+app.use(authRouter)
+
 
 export default app;

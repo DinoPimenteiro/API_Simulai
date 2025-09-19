@@ -1,6 +1,6 @@
 import transporter from "../config/mailConfig.js";
 import { cryptoHash } from "../utils/hashUtils.js";
-import crypto from 'crypto';
+import crypto from "crypto";
 
 class mailService {
   async sendEmail(userMail) {
@@ -16,18 +16,30 @@ class mailService {
 
     try {
       const sent = await transporter.sendMail(body);
-      return ({
+      return {
         sent,
-        code
-      });
+        code,
+      };
     } catch (err) {
       throw new Error(err.message);
     }
   }
 
-  async recruitEmail(email){
-    let tk = crypto.randomBytes(40).toString('hex');
+  async recruitEmail(email) {
+    let tk = crypto.randomBytes(40).toString("hex");
     const hashTk = cryptoHash(tk);
+
+    const link= `http://localhost:4000/auth/admin/${tk}`;
+
+    const body = {
+      from: process.env.CLIENT_ID,
+      to: email,
+      subject: "Convite para a equipe de desenvolvimento SIMULAI",
+      html: `Clique <a src="http://localhost:4000/auth/admin">AQUI</a> para realizar o cadastro da sua conta. 
+             Não compartilhe este link com ninguém.`,
+      text: `Clique em ${link} para realizar o cadastro da sua conta. 
+             Não compartilhe este link com absolutamente ninguém.`
+    };
   }
 }
 
