@@ -36,7 +36,7 @@ class clientService {
       }
 
       if (age <= 13 || isNaN(age)) {
-        throw new Error("Invalid age");
+        throw new Error("Invalid age.");
       }
 
       const client = await ClientRepo.save({ name, email, age, passwordHash });
