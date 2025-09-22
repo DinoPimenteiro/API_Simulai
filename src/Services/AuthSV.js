@@ -3,10 +3,10 @@ import jwt from "jsonwebtoken";
 import RefreshTokenRepo from "../Repositories/RfshTokenRepo.js";
 import ClientRepo from "../Repositories/ClientRepo.js";
 import mailService from "./MailSV.js";
-import validator from "validator";
 import { ComparePass, cryptoHash } from "../utils/hashUtils.js";
 import getToken from "../utils/getToken.js";
 import bcrypt from 'bcrypt';
+import { validateEmail, validatePassword } from "../utils/generalValidations.js";
 
 class authService {
   //Login
@@ -19,10 +19,8 @@ class authService {
         throw new Error("missing user-agent.");
       }
 
-      if (!validator.isEmail(email) || !email) {
-        throw new Error("Invalid Email");
-      }
-
+      validateEmail(email)
+      
       const client = await ClientRepo.findEmail(email);
 
       if (!client) {
@@ -166,9 +164,7 @@ class authService {
         throw new Error("Not identified device.");
       }
 
-      if (!validator.isEmail(email)) {
-        throw new Error("Invalid email.");
-      }
+      validateEmail(email)
 
       const user = await ClientRepo.findEmail(email);
 
@@ -244,9 +240,7 @@ class authService {
     try {
       const { password } = req.body;
 
-      if (!validator.isStrongPassword(password)) {
-        throw new Error("Weak password");
-      }
+      validatePassword(password)
 
       const passwordHash = cryptoHash(password);
 

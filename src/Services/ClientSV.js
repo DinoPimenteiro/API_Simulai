@@ -4,6 +4,7 @@ import validator from "validator";
 import { PassHash, ComparePass } from "../utils/hashUtils.js";
 import { Capitalize } from "../utils/stringUtils.js";
 import { ValidLevel, validComment } from "../utils/userValidator.js";
+import { validateAge, validateEmail, validateName, validatePassword, validateUser } from "../utils/generalValidations.js";
 
 class clientService {
   async register(data) {
@@ -27,17 +28,11 @@ class clientService {
         throw new Error("Weak password.");
       }
 
-      if (!validator.isEmail(email)) {
-        throw new Error("Invalid email.");
-      }
+      validateEmail(email)
 
-      if (name == "") {
-        throw new Error("Invalid name.");
-      }
+      validateName(name)
 
-      if (age <= 13 || isNaN(age)) {
-        throw new Error("Invalid age");
-      }
+      validateAge(age)
 
       const client = await ClientRepo.save({ name, email, age, passwordHash });
 
@@ -76,9 +71,7 @@ class clientService {
     try {
       const user = await ClientRepo.findID(id);
 
-      if (!user) {
-        throw new Error("User not found.");
-      }
+      validateUser(user)
 
       return {
         id: user._id,
@@ -98,9 +91,7 @@ class clientService {
     try {
       let user = await ClientRepo.findID(id);
 
-      if (!user) {
-        throw new Error("Error: User not found.");
-      }
+      validateUser(user)
 
       const userSessions = await RefreshTokenRepo.destroyManyTokens(id);
       const deleted = await ClientRepo.destroy(id);
@@ -120,9 +111,7 @@ class clientService {
 
       const user = await ClientRepo.findEmail(email);
 
-      if (!user) {
-        throw new Error("Invalid user.");
-      }
+      validateUser(user)
 
       var pass = ComparePass(password, user.passwordHash);
 
@@ -135,9 +124,7 @@ class clientService {
       var name = validator.trim(name);
       var age = parseInt(age, 10);
 
-      if (name === "" || !name) {
-        throw new Error("Invalid name.");
-      }
+      validateName(name)
 
       if (job === "" || !job) {
         throw new Error("Invalid job.");
@@ -151,13 +138,9 @@ class clientService {
         throw new Error("Invalid level.");
       }
 
-      if (isNaN(age) || age <= 13) {
-        throw new Error("Invalid age.");
-      }
+      validateAge(age)
 
-      if (!validator.isStrongPassword(password)) {
-        throw new Error("weak password.");
-      }
+      validatePassword(password)
 
       const passwordHash = await PassHash(password, 13);
 
