@@ -4,11 +4,13 @@ import validator from "validator";
 import { PassHash, ComparePass } from "../utils/hashUtils.js";
 import { Capitalize } from "../utils/stringUtils.js";
 import { ValidLevel, validComment } from "../utils/userValidator.js";
+import authService from "./AuthSV.js";
 
 class clientService {
-  async register(data) {
-    var { name, email, password, age } = data;
-    var passwordHash;
+  async register(data, headers) {
+    let { name, email, password, age } = data;
+    let device = headers;
+    let passwordHash;
 
     age = parseInt(age, 10);
     name = validator.trim(Capitalize(name));
@@ -41,12 +43,25 @@ class clientService {
 
       const client = await ClientRepo.save({ name, email, age, passwordHash });
 
-      return {
-        id: client._id,
-        name: client.name,
-        email: client.email,
-        age: client.age,
-      };
+      if (client) {
+        const { acessToken, rawToken } = await authService.authenticate(
+          {
+            password,
+            email,
+          },
+          device
+        );
+        return {
+          id: client._id,
+          name: client.name,
+          email: client.email,
+          age: client.age,
+          acess: acessToken,
+          token: rawToken,
+        };
+      } else {
+        throw new Error("failed to authenticate user.");
+      }
     } catch (err) {
       throw new Error(`error: ${err.message}`);
     }
@@ -221,9 +236,23 @@ class clientService {
     }
   }
 
-  // Pesquisa para agregar/completar o cadastro do usuário;
-  async research(req) { 
+  async getAllComments() {
+    try {
+      const {name, email, comment, _id} = await ClientRepo.findAll();
+
+      return {
+        id: _id,
+        userName: name,
+        userEmail: email,
+        comments: comment,
+      }
+
+    } catch (err) {
+      throw new Error(`Error: ${err.message}`)
+    }
   }
+  // Pesquisa para agregar/completar o cadastro do usuário;
+  async research(req) {}
 }
 
 export default new clientService();

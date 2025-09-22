@@ -3,7 +3,7 @@ import clientService from "../Services/ClientSV.js";
 class clientController {
   async newClient(req, res) {
     try {
-      const newUser = await clientService.register(req.body);
+      const newUser = await clientService.register(req.body, req.headers['user-agent']);
       if (newUser) {
         res.status(200).json(newUser);
       } else {
@@ -63,6 +63,22 @@ class clientController {
     } catch (err) {
       res.status(418).json(err.message);
     }
+  }
+
+  async getComments(req, res){
+    try{
+      const comment = await clientService.getAllComments();
+
+      if(comment){
+        res.status(200).json(comment);
+      } else {
+        res.status(400).json({error: "not possible to show comments."})
+      }
+    } catch(err){
+      res.status(500).json(err.message)
+    }
+
+    
   }
 }
 

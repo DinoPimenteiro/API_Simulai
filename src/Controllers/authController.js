@@ -3,10 +3,7 @@ import authService from "../Services/AuthSV.js";
 class authController {
   async login(req, res) {
     try {
-      const { acessToken, rawToken } = await authService.authenticate(
-        req.body,
-        req.headers["user-agent"]
-      );
+      const { acessToken, rawToken } = await authService.userAuth(req);
 
       // Ajeitar por segurança depois
       if (rawToken) {
@@ -26,6 +23,7 @@ class authController {
       res.status(400).json(err.message);
     }
   }
+
   async refresh(req, res) {
     try {
       const { newRawToken, updatedToken, newAcessToken } =
@@ -63,12 +61,11 @@ class authController {
       const { refreshTk, newRawToken } = await authService.sendEmail(req);
 
       if (refreshTk) {
-        
         res.cookie("refreshToken", newRawToken, {
           maxAge: 8 * 60 * 1000,
         });
 
-        res.status(200).json({refreshTk, newRawToken});
+        res.status(200).json({ refreshTk, newRawToken });
       } else {
         //Alterar para um mensagem genérica
         res.status(400).json({ error: "failed to send email" });

@@ -1,10 +1,8 @@
 # Lista tarefas
 
-- Ajeitar o retorno dos erros e dos resultados (retorno dos tokens) e organizar melhor o fluxo;
-- Começar o repo de admin;
-- Implementar um middleware só para administradores;
-- Achar uma forma segura para criar administradores;
-- Colocar sob controle do admin todos os recursos descritos na documentação.
+- Fazer os comandos básicos de admin, como edição de comentários, visualização de usuários com suas métricas, login com autenticação;
+
+- Começar as configurações de link/token de uso único nas rotas, totp obrigatório e armazenamento e verificação de metadados (ip, localização, dispositivo);
 
 ## Lembretes
 

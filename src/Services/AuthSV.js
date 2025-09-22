@@ -6,14 +6,13 @@ import mailService from "./MailSV.js";
 import validator from "validator";
 import { ComparePass, cryptoHash } from "../utils/hashUtils.js";
 import getToken from "../utils/getToken.js";
-import bcrypt from 'bcrypt';
 
 class authService {
   //Login
-  async authenticate(data, header) {
+  async userAuth(req) {
     try {
-      const { password, email } = data;
-      const device = header;
+      const { password, email } = req.body;
+      const device = req.headers['user-agent'];
 
       if (!device) {
         throw new Error("missing user-agent.");
@@ -128,6 +127,7 @@ class authService {
       throw new Error(err.message);
     }
   }
+
   async logout(req) {
     try {
       const token = getToken(req);
@@ -166,17 +166,7 @@ class authService {
         throw new Error("Not identified device.");
       }
 
-      if (!validator.isEmail(email)) {
-        throw new Error("Invalid email.");
-      }
-
-      const user = await ClientRepo.findEmail(email);
-
-      if (!user) {
-        throw new Error("User was not found");
-      }
-
-      const { sent, code } = await mailService.sendEmail(email);
+      const { sent, code, user } = await mailService.sendEmail(email);
 
       const newRawToken = crypto.randomBytes(40).toString("hex");
       const newHashedToken = cryptoHash(newRawToken);
@@ -196,6 +186,7 @@ class authService {
           newRawToken,
           sent,
         };
+
       } else {
         throw new Error("failed.");
       }
@@ -214,7 +205,6 @@ class authService {
       }
 
       const hashedToken = cryptoHash(token);
-
       const userToken = await RefreshTokenRepo.findByToken(hashedToken);
 
       if (!userToken) {
@@ -270,6 +260,7 @@ class authService {
       throw new Error(err.message);
     }
   }
+
 }
 
 export default new authService();

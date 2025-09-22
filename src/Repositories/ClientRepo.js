@@ -1,4 +1,4 @@
-import {Client} from "../Models/Client.js";
+import { Client } from "../Models/Client.js";
 
 class ClientRepo {
   async findAll() {
@@ -8,8 +8,9 @@ class ClientRepo {
   async findID(id) {
     return Client.findById(id);
   }
-  async findEmail(email){
-    return Client.where({email: email}).findOne();
+
+  async findEmail(email) {
+    return Client.where({ email: email }).findOne();
   }
 
   async destroy(id) {
@@ -22,6 +23,16 @@ class ClientRepo {
 
   async save(data) {
     return Client.create(data);
+  }
+
+  async destroyComment(id, clientId) {
+    return Client.findByIdAndUpdate(
+      clientId,
+      {
+        $pull: { comment: { _id: id } },
+      },
+      { new: true }
+    );
   }
 }
 

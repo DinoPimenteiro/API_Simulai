@@ -13,6 +13,7 @@ async function ComparePass(passw, hash) {
   return comp;
 }
 
+// RefreshTokens
 function cryptoHash(update, devolution = "hex") {
   const criptography = crypto
     .createHash("sha256")
@@ -21,4 +22,10 @@ function cryptoHash(update, devolution = "hex") {
   return criptography;
 }
 
-export { PassHash, ComparePass, cryptoHash };
+// Invite tokens
+function encryptToken(tk) {
+  const crypt = crypto.createHash("sha512").update(tk).digest("base64");
+  return crypt
+}
+
+export { PassHash, ComparePass, cryptoHash, encryptToken };
