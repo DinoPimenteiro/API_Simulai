@@ -3,24 +3,29 @@ import jwt from "jsonwebtoken";
 import RefreshTokenRepo from "../Repositories/RfshTokenRepo.js";
 import ClientRepo from "../Repositories/ClientRepo.js";
 import mailService from "./MailSV.js";
-import { ComparePass, cryptoHash } from "../utils/hashUtils.js";
+import { ComparePass, cryptoHash, PassHash } from "../utils/hashUtils.js";
 import getToken from "../utils/getToken.js";
-import bcrypt from 'bcrypt';
-import { validateEmail, validatePassword } from "../utils/generalValidations.js";
+import {
+  validateAge,
+  validateEmail,
+  validateName,
+  validatePassword,
+} from "../utils/generalValidations.js";
+import AdminRepo from "../Repositories/AdminRepo.js";
 
 class authService {
   //Login
-  async authenticate(data, header) {
+  async authenticate(req, res) {
     try {
-      const { password, email } = data;
-      const device = header;
+      const { password, email } = req.body;
+      const device = req.headers["user-agent"];
 
       if (!device) {
         throw new Error("missing user-agent.");
       }
 
-      validateEmail(email)
-      
+      validateEmail(email);
+
       const client = await ClientRepo.findEmail(email);
 
       if (!client) {
@@ -126,6 +131,7 @@ class authService {
       throw new Error(err.message);
     }
   }
+
   async logout(req) {
     try {
       const token = getToken(req);
@@ -164,7 +170,7 @@ class authService {
         throw new Error("Not identified device.");
       }
 
-      validateEmail(email)
+      validateEmail(email);
 
       const user = await ClientRepo.findEmail(email);
 
@@ -240,7 +246,7 @@ class authService {
     try {
       const { password } = req.body;
 
-      validatePassword(password)
+      validatePassword(password);
 
       const passwordHash = cryptoHash(password);
 
@@ -264,6 +270,60 @@ class authService {
       throw new Error(err.message);
     }
   }
+
+  // Cadastro de admin
+  async authenticateAdmin(req) {
+    try {
+      const tkUUID = req.params.tokenUUID;
+      const device = req.headers["user-agent"];
+      // const {tk, timeLimit, insertedEmail} = await bossSendRecruitment()
+      const { name, email, age, password, totpCode } = req.body;
+      let passwordHash;
+      
+      // Pôr verificação de dispositivo para atividade suspeita.
+      if (!device) {
+        throw new Error("Missing device.");
+      }
+
+      // Utilizar o mesmo email que o convite foi utilizado.
+      const admin = await AdminRepo.findByEmail(insertedEmail);
+
+      if (admin.email !== email || !admin) {
+        throw new Error("Not possible to find search.");
+      }
+
+      //Colocar validação de tempo que será salvo no banco junto com o UUID
+      if (tkUUID !== tk) {
+        throw new Error("Invalid UUIDtoken");
+      }
+      
+      validateEmail(email);
+      validateAge(age);
+      validateName(name);
+
+      if (validatePassword(password)) {
+        passwordHash = PassHash(passwordHash);
+      }
+
+      /* função do 2FA com os parametros de: 
+        - secret;
+        - encoding;
+        - token inserido do cara 
+      */
+     
+      if(totpVerify(admin.code, 'base32', totpCode)){
+        const newAdmin = await AdminRepo.save({name, email, passwordHash, age});
+        return newAdmin;
+      } else {
+        throw new Error("deu ruim pra CARALHO")
+      }
+    } catch (err) {
+      throw new Error(err.message);
+    }
+  }
+
+  // Validação de admin
+  async validateAdmin(req) {}
 }
 
 export default new authService();

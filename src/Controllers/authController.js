@@ -3,10 +3,7 @@ import authService from "../Services/AuthSV.js";
 class authController {
   async login(req, res) {
     try {
-      const { acessToken, rawToken } = await authService.authenticate(
-        req.body,
-        req.headers["user-agent"]
-      );
+      const { acessToken, rawToken } = await authService.authenticate(req, res);
 
       // Ajeitar por segurança depois
       if (rawToken) {

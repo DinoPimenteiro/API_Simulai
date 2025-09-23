@@ -3,7 +3,7 @@ import clientService from "../Services/ClientSV.js";
 class clientController {
   async newClient(req, res) {
     try {
-      const newUser = await clientService.register(req.body);
+      const newUser = await clientService.register(req);
       if (newUser) {
         res.status(200).json(newUser);
       } else {

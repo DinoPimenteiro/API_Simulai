@@ -7,8 +7,8 @@ import { ValidLevel, validComment } from "../utils/userValidator.js";
 import { validateAge, validateEmail, validateName, validatePassword, validateUser } from "../utils/generalValidations.js";
 
 class clientService {
-  async register(data) {
-    var { name, email, password, age } = data;
+  async register(req, res) {
+    var { name, email, password, age } = req.body;
     var passwordHash;
 
     age = parseInt(age, 10);
@@ -29,7 +29,7 @@ class clientService {
       }
 
       validateEmail(email)
-
+    
       validateName(name)
 
       validateAge(age)
@@ -43,7 +43,7 @@ class clientService {
         age: client.age,
       };
     } catch (err) {
-      throw new Error(`error: ${err.message}`);
+      throw new Error(`server error: ${err.message}`);
     }
   }
 

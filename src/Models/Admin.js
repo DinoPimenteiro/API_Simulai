@@ -10,12 +10,16 @@ const AdminSchema = new Schema({
   age: Number,
   role: {
     type: String,
-    enum: ["Recruiter", "Manager"],
+    enum: ["Boss", "Manager"],
     required: true,
   },
+  code: {
+    type: String,
+    required: true,
+  }
 });
 
-const adminType = ["Recruiter", "Manager"];
+const adminType = ["Boss", "Manager"];
 
 const Admin = mongoose.model("admin", AdminSchema);
 

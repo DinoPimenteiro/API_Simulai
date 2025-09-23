@@ -9,6 +9,10 @@ class AdminRepo{
     return Admin.find({email: email});
   }
 
+  async findByCode(code){
+    return Admin.findOne({code: code})
+  }
+
   async getAll(){
     return Admin.find().lean();
   }

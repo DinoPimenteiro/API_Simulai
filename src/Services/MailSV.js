@@ -2,6 +2,8 @@ import transporter from "../config/mailConfig.js";
 import { cryptoHash } from "../utils/hashUtils.js";
 import crypto from "crypto";
 
+const ROUTE = '/admin/invite/';
+
 class mailService {
   async sendEmail(userMail) {
     const code = Math.floor(1000 + Math.random() * 9000);
@@ -26,20 +28,31 @@ class mailService {
   }
 
   async recruitEmail(email) {
-    let tk = crypto.randomBytes(40).toString("hex");
-    const hashTk = cryptoHash(tk);
+    const tk = crypto.randomUUID();
+    const timeLimit = new Date(Date.now() + 24 * 60 * 1000)
 
-    const link= `http://localhost:4000/auth/admin/${tk}`;
+    // http://localhost:4000/admin/invite/{tokenUUID}
+    const invitationaLink = `${process.env.APP_URL}${ROUTE}${tk}`
 
     const body = {
       from: process.env.CLIENT_ID,
       to: email,
-      subject: "Convite para a equipe de desenvolvimento SIMULAI",
-      html: `Clique <a src="http://localhost:4000/auth/admin">AQUI</a> para realizar o cadastro da sua conta. 
-             Não compartilhe este link com ninguém.`,
-      text: `Clique em ${link} para realizar o cadastro da sua conta. 
-             Não compartilhe este link com absolutamente ninguém.`
-    };
+      subject: "Bem Vindo a SIMULAI",
+      html: `Seja muito bem vindo a equipe de adminstradores da SIMULAI. Clique <a href="${invitationaLink}"> AQUI </a>`,
+      text: `Link para cadastro de administrador: ${invitationaLink}`
+    }
+
+    try{
+      const sent = await transporter.sendMail(body);
+
+      return {
+        sent,
+        tk,
+        timeLimit
+      }
+    } catch(err){
+      throw new Error(err.message)
+    }
   }
 }
 
