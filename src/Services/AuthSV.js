@@ -15,7 +15,7 @@ import AdminRepo from "../Repositories/AdminRepo.js";
 
 class authService {
   //Login
-  async authenticate(req, res) {
+  async authenticate(req) {
     try {
       const { password, email } = req.body;
       const device = req.headers["user-agent"];
@@ -271,18 +271,29 @@ class authService {
     }
   }
 
-  async sendRecruitMail(req) {
-    const { email } = req.body;
-    const tk = getToken(req);
+  async sendRecruitEmail(req) {
+    try {
+      const { email } = req.body;
+      const { sent, tk, timeLimit } = await mailService.recruitEmail(email);
 
-    const hashedTk = cryptoHash(tk);
-    const existsTk = await RefreshTokenRepo.findByToken(hashedTk);
+      if (!sent.accepted) {
+        throw {
+          code: errorUtils.mail,
+          message: sent.response
+        }
+      }
 
-    if (!existsTk) {
-      throw new Error("Authorization is required.");
+      const admin = AdminRepo.save({ email: email });
+
+      return {
+        tk: tk,
+        time: timeLimit,
+        insertedEmail: email
+      }
+
+    } catch (err) {
+      throw new Error(err.message);
     }
-
-    const { sent, tkUUID, timeLimit } = await mailService.recruitEmail(email);
   }
 
   // Cadastro de admin
@@ -290,7 +301,8 @@ class authService {
     try {
       const tkUUID = req.params.tokenUUID;
       const device = req.headers["user-agent"];
-      // const {tk, timeLimit, insertedEmail} = await bossSendRecruitment()
+
+      const { tk, timeLimit, insertedEmail } = await bossSendRecruitment()
       const { name, email, age, password, totpCode } = req.body;
       let passwordHash;
 
@@ -325,13 +337,8 @@ class authService {
         - token inserido do cara 
       */
 
-      if (totpVerify(admin.code, "base32", totpCode)) {
-        const newAdmin = await AdminRepo.save({
-          name,
-          email,
-          passwordHash,
-          age,
-        });
+      if (totpVerify(admin.code, 'base32', totpCode)) {
+        const newAdmin = await AdminRepo.update(admin._id, { name, email, passwordHash, age });
         return newAdmin;
       } else {
         throw new Error("deu ruim pra CARALHO");
@@ -342,7 +349,7 @@ class authService {
   }
 
   // Validação de admin
-  async validateAdmin(req) {}
+  async validateAdmin(req) { }
 }
 
 export default new authService();

@@ -22,7 +22,7 @@ class AdminRepo{
   }
 
   async update(id, data){
-    return Admin.updateOne(id, data)
+    return Admin.findByIdAndUpdate(id, data)
   }
 }
 
