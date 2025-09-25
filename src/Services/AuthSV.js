@@ -271,6 +271,20 @@ class authService {
     }
   }
 
+  async sendRecruitMail(req) {
+    const { email } = req.body;
+    const tk = getToken(req);
+
+    const hashedTk = cryptoHash(tk);
+    const existsTk = await RefreshTokenRepo.findByToken(hashedTk);
+
+    if (!existsTk) {
+      throw new Error("Authorization is required.");
+    }
+
+    const { sent, tkUUID, timeLimit } = await mailService.recruitEmail(email);
+  }
+
   // Cadastro de admin
   async authenticateAdmin(req) {
     try {
@@ -279,7 +293,7 @@ class authService {
       // const {tk, timeLimit, insertedEmail} = await bossSendRecruitment()
       const { name, email, age, password, totpCode } = req.body;
       let passwordHash;
-      
+
       // Pôr verificação de dispositivo para atividade suspeita.
       if (!device) {
         throw new Error("Missing device.");
@@ -296,7 +310,7 @@ class authService {
       if (tkUUID !== tk) {
         throw new Error("Invalid UUIDtoken");
       }
-      
+
       validateEmail(email);
       validateAge(age);
       validateName(name);
@@ -310,12 +324,17 @@ class authService {
         - encoding;
         - token inserido do cara 
       */
-     
-      if(totpVerify(admin.code, 'base32', totpCode)){
-        const newAdmin = await AdminRepo.save({name, email, passwordHash, age});
+
+      if (totpVerify(admin.code, "base32", totpCode)) {
+        const newAdmin = await AdminRepo.save({
+          name,
+          email,
+          passwordHash,
+          age,
+        });
         return newAdmin;
       } else {
-        throw new Error("deu ruim pra CARALHO")
+        throw new Error("deu ruim pra CARALHO");
       }
     } catch (err) {
       throw new Error(err.message);

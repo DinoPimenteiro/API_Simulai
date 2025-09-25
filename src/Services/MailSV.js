@@ -47,7 +47,7 @@ class mailService {
 
       return {
         sent,
-        tk,
+        tkUUID,
         timeLimit
       }
     } catch(err){
