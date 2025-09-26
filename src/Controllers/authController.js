@@ -57,15 +57,14 @@ class authController {
 
   async recoverMail(req, res) {
     try {
-      const { refreshTk, newRawToken } = await authService.sendEmail(req);
+      const { refreshTk, newRawToken } = await authService.recoveryMail(req);
 
       if (refreshTk) {
-        
         res.cookie("refreshToken", newRawToken, {
           maxAge: 8 * 60 * 1000,
         });
 
-        res.status(200).json({refreshTk, newRawToken});
+        res.status(200).json({ refreshTk, newRawToken });
       } else {
         //Alterar para um mensagem genérica
         res.status(400).json({ error: "failed to send email" });
@@ -100,6 +99,33 @@ class authController {
       }
     } catch (err) {
       res.status(410).json(err.message);
+    }
+  }
+  async recruitMail(req, res) {
+    try {
+      const {recruitToken} = await authService.sendRecruitEmail(req);
+      
+      if(recruitToken){
+        res.status(200).json(req.admin, recruitToken);
+      } else {
+        res.status(418).json({error: "DESGRAÇA"})
+      }
+    } catch (err) {
+      res.status(500).json(err.message);
+    }
+  }
+
+  async registerAdmin(req, res) {
+    try {
+      const newManager = await authService.authenticateAdmin(req);
+
+      if (newManager) {
+        res.status(200).json(newManager);
+      } else {
+        res.status(400).json({ error: "Erro no registro" });
+      }
+    } catch (err) {
+      res.status(500).json(err.message);
     }
   }
 }

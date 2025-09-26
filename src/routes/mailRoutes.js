@@ -1,11 +1,11 @@
 import { Router } from "express";
 import authController from "../Controllers/authController.js";
-import authToken from "../Middlewares/auth.js";
+import authUser from "../Middlewares/authUser.js";
 
 const router = Router();
 
 router.post("/recover-mail", authController.recoverMail);
 router.post("/recover-mail/valid", authController.validCodeMail);
-router.put("/reset-password", authToken, authController.resetPass);
+router.put("/reset-password", authUser, authController.resetPass);
 
 export default router;

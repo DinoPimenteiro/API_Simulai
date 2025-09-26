@@ -5,7 +5,7 @@ export async function generateTotp(email, appName = "SimulAI") {
   const secret = authenticator.generateSecret();
   const token = authenticator.generate(secret);
   const otppath = authenticator.keyuri(email, appName, secret);
-  const qrCodeLink = qrcode.toDataURL(otppath);
+  const qrCodeLink = await qrcode.toDataURL(otppath);
   
   return {
     qrCodeLink,

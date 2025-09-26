@@ -1,6 +1,6 @@
 import transporter from "../config/mailConfig.js";
-import { cryptoHash } from "../utils/hashUtils.js";
-import crypto from "crypto";
+import jwt from 'jsonwebtoken';
+import { verifyTOTP, generateTotp} from "../config/2FAConfig.js";
 
 const ROUTE = '/admin/invite/';
 
@@ -12,7 +12,7 @@ class mailService {
       from: process.env.CLIENT_ID,
       to: userMail,
       subject: "Recuperação de acesso- SIMULAI",
-      html: `<h1> SIMULAI </h1> \n <h3> código para recuperação de acesso: ${code} </h3>`,
+      html: `<h1> SIMULAI </h1> \n <h3> cód igo para recuperação de acesso: ${code} </h3>`,
       text: `Código de recuperação para senha SIMULAI: ${code}`,
     };
 
@@ -28,11 +28,25 @@ class mailService {
   }
 
   async recruitEmail(email) {
-    const tk = crypto.randomUUID();
     const timeLimit = new Date(Date.now() + 24 * 60 * 1000)
 
     // http://localhost:4000/admin/invite/{tokenUUID}
-    const invitationaLink = `${process.env.APP_URL}${ROUTE}${tk}`
+    const invitationaLink = `${process.env.APP_URL}${ROUTE}`
+
+    const { qrCodeLink, secret, token} = await generateTotp(email);
+
+    const payload = {
+      email: email,
+      role: 'admin',
+      type: 'recruit',
+      secret: secret,
+      totpCode: token,
+      qrcode: qrCodeLink
+    }
+
+    const recruitToken = jwt.sign(payload, process.env.JWT_SECRET, {
+      expiresIn: '10m',
+    });
 
     const body = {
       from: process.env.CLIENT_ID,
@@ -42,13 +56,15 @@ class mailService {
       text: `Link para cadastro de administrador: ${invitationaLink}`
     }
 
+    
     try{
       const sent = await transporter.sendMail(body);
 
       return {
         sent,
-        tkUUID,
-        timeLimit
+        timeLimit,
+        recruitToken,
+        invitationaLink
       }
     } catch(err){
       throw new Error(err.message)

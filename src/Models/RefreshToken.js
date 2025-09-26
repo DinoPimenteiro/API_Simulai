@@ -7,6 +7,8 @@ const {ObjectId} = Schema;
 const RefreshTokenSchema = new Schema({
   userId: ObjectId,
   userEmail: String,
+  type: String,
+  role: String,
   device: String,
   token: String,
   recoveryCode: {

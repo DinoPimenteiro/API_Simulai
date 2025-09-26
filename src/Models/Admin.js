@@ -11,9 +11,8 @@ const AdminSchema = new Schema({
   role: {
     type: String,
     enum: ["Boss", "Manager"],
-    required: true,
   },
-  code: {
+  secret: {
     type: String,
     required: true,
   }

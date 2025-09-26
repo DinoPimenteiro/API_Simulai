@@ -12,6 +12,7 @@ import {
   validatePassword,
 } from "../utils/generalValidations.js";
 import AdminRepo from "../Repositories/AdminRepo.js";
+import { verifyTOTP } from "../config/2FAConfig.js";
 
 class authService {
   //Login
@@ -38,6 +39,8 @@ class authService {
         const payload = {
           id: client._id,
           email: client.email,
+          type: "acess",
+          role: "user",
         };
 
         const acessToken = jwt.sign(payload, process.env.JWT_SECRET, {
@@ -51,6 +54,8 @@ class authService {
           token: hashToken,
           userId: client._id,
           userEmail: client.email,
+          type: "acess",
+          role: "user",
           device: device,
           expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         });
@@ -84,7 +89,6 @@ class authService {
       const hashedToken = cryptoHash(rawToken);
 
       const refreshToken = await RefreshTokenRepo.findByToken(hashedToken);
-      const device = req.headers["user-agent"];
 
       // Dá pra pôr validação por tempo também. Seria bom.
       if (!refreshToken) {
@@ -95,9 +99,17 @@ class authService {
         throw new Error("Missing device.");
       }
 
+      if (refreshToken.type !== "acess") {
+        throw new Error("O token precisa ser do tipo: acess");
+      }
+
+      const device = req.headers["user-agent"];
+
       const payload = {
         id: refreshToken.userId,
         email: refreshToken.userEmail,
+        type: refreshToken.type,
+        role: refreshToken.role,
       };
 
       const newAcessToken = jwt.sign(payload, process.env.JWT_SECRET, {
@@ -142,9 +154,13 @@ class authService {
 
       const hashed = cryptoHash(token);
       const refreshToken = await RefreshTokenRepo.findByToken(hashed);
-
+      
       if (!refreshToken) {
         throw new Error("Invalid token.");
+      }
+
+      if (refreshToken.type !== "acess") {
+        throw new Error("O token precisa ser de acesso.");
       }
 
       const deletedToken = await RefreshTokenRepo.destroyToken(
@@ -161,7 +177,7 @@ class authService {
     }
   }
 
-  async sendEmail(req) {
+  async recoveryMail(req) {
     try {
       const { email } = req.body;
       const device = req.headers["user-agent"];
@@ -187,6 +203,8 @@ class authService {
         const refreshTk = await RefreshTokenRepo.saveToken({
           userId: user._id,
           userEmail: user.email,
+          role: "client",
+          type: "recover_mail",
           token: newHashedToken,
           device,
           recoveryCode: code,
@@ -223,14 +241,20 @@ class authService {
         throw new Error("");
       }
 
+      if(userToken.type !== 'recover_mail'){
+        throw new Error("Token type must be recover_mail");
+      }
+
       if (code === userToken.recoveryCode) {
         const payload = {
           id: userToken.userId,
           email: userToken.userEmail,
+          type: 'recover',
+          role: 'client'
         };
 
         const acessTk = jwt.sign(payload, process.env.JWT_SECRET, {
-          expiresIn: "3m",
+          expiresIn: "5m",
         });
 
         return acessTk;
@@ -274,23 +298,40 @@ class authService {
   async sendRecruitEmail(req) {
     try {
       const { email } = req.body;
-      const { sent, tk, timeLimit } = await mailService.recruitEmail(email);
+      const { sent, timeLimit, recruitToken } = await mailService.recruitEmail(
+        email
+      );
+
+      const rawToken = getToken(req);
+
+      if (!rawToken) {
+        throw new Error("oDAF");
+      }
+
+      const hashedToken = cryptoHash(rawToken);
+      const token = await RefreshTokenRepo.findByToken(hashedToken);
+
+      if (!token) {
+        throw new Error("Token was not found in database.");
+      }
+
+      if(token.role !== 'admin'){
+        throw new Error("Unauthorized.")
+      }
 
       if (!sent.accepted) {
-        throw {
-          code: errorUtils.mail,
-          message: sent.response
-        }
+        throw new Error("Email was not sent.");
       }
 
-      const admin = AdminRepo.save({ email: email });
+      if (recruitToken) {
+        return {
+          recruitToken,
+          time: timeLimit
+        };
 
-      return {
-        tk: tk,
-        time: timeLimit,
-        insertedEmail: email
+      } else {
+        throw new Error("jwt payload error");
       }
-
     } catch (err) {
       throw new Error(err.message);
     }
@@ -299,11 +340,9 @@ class authService {
   // Cadastro de admin
   async authenticateAdmin(req) {
     try {
-      const tkUUID = req.params.tokenUUID;
       const device = req.headers["user-agent"];
 
-      const { tk, timeLimit, insertedEmail } = await bossSendRecruitment()
-      const { name, email, age, password, totpCode } = req.body;
+      const { name, email, age, password, code } = req.body;
       let passwordHash;
 
       // Pôr verificação de dispositivo para atividade suspeita.
@@ -312,16 +351,13 @@ class authService {
       }
 
       // Utilizar o mesmo email que o convite foi utilizado.
-      const admin = await AdminRepo.findByEmail(insertedEmail);
+      const { emailPayload } = req.user;
 
-      if (admin.email !== email || !admin) {
-        throw new Error("Not possible to find search.");
+      if (!emailPayload || email !== emailPayload) {
+        throw new Error("Missing email/token.");
       }
 
-      //Colocar validação de tempo que será salvo no banco junto com o UUID
-      if (tkUUID !== tk) {
-        throw new Error("Invalid UUIDtoken");
-      }
+      //Colocar validação de tempo;
 
       validateEmail(email);
       validateAge(age);
@@ -331,25 +367,25 @@ class authService {
         passwordHash = PassHash(passwordHash);
       }
 
-      /* função do 2FA com os parametros de: 
-        - secret;
-        - encoding;
-        - token inserido do cara 
-      */
+      const validationTotp = verifyTOTP(req.user.secret, code);
 
-      if (totpVerify(admin.code, 'base32', totpCode)) {
-        const newAdmin = await AdminRepo.update(admin._id, { name, email, passwordHash, age });
+      if (validationTotp) {
+        const newAdmin = await AdminRepo.save({
+          name,
+          email,
+          passwordHash,
+          age,
+          secret: code,
+          role: "Manager",
+        });
         return newAdmin;
       } else {
-        throw new Error("deu ruim pra CARALHO");
+        throw new Error("FODASE FILHO DA PUTA");
       }
     } catch (err) {
       throw new Error(err.message);
     }
   }
-
-  // Validação de admin
-  async validateAdmin(req) { }
 }
 
 export default new authService();

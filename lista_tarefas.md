@@ -1,14 +1,14 @@
 # Lista tarefas
 
-- Ajeitar o retorno dos erros e dos resultados (retorno dos tokens) e organizar melhor o fluxo;
-- Começar o repo de admin;
-- Implementar um middleware só para administradores;
-- Achar uma forma segura para criar administradores;
-- Colocar sob controle do admin todos os recursos descritos na documentação.
+- Colocar sob controle do admin todos os recursos descritos na documentação;
+- Testar API inteira com o novo fluxo de tokens;
+- Testar as funcionalidades de admin e retornar o qrcode;
+- Criar os administradores do tipo Boss diretamente no banco para enviar email de recrutamento;
 
 ## Lembretes
 
-- Manter sempre a documentação atualizada e organizada para que o frontend, tanto o do mobile quanto o web, consiga realizar as requisições necessárias. Fornecer se o endpoint (rota) tem algum middleware, o que a rota retorna, o que ela necessita, quais erros ela pode retornar e outras coisas que podem ser consideradas como importante.
+- Manter sempre a documentação atualizada e organizada para que o frontend, tanto o do mobile quanto o web, consiga realizar as requisições necessárias. Fornecer se o endpoint (rota) tem algum middleware, o que a rota retorna, o que ela necessita, quais erros ela pode retornar e outras coisas que podem ser consideradas importantes.
+- Refatorar o código inteiro;
 
 ## Problemas
 
