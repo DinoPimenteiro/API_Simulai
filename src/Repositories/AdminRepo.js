@@ -6,7 +6,7 @@ class AdminRepo{
   }
 
   async findByEmail(email){
-    return Admin.find({email: email});
+    return Admin.findOne({email: email});
   }
 
   async findByCode(code){
@@ -14,7 +14,7 @@ class AdminRepo{
   }
 
   async getAll(){
-    return Admin.find().lean();
+    return Admin.find();
   }
 
   async save(data){

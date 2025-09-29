@@ -103,12 +103,12 @@ class authController {
   }
   async recruitMail(req, res) {
     try {
-      const {recruitToken} = await authService.sendRecruitEmail(req);
-      
-      if(recruitToken){
-        res.status(200).json(req.admin, recruitToken);
+      const { invitationaLink } = await authService.sendRecruitEmail(req);
+
+      if (invitationaLink) {
+        res.status(200).json(invitationaLink);
       } else {
-        res.status(418).json({error: "DESGRAÇA"})
+        res.status(418).json({ error: "DESGRAÇA" });
       }
     } catch (err) {
       res.status(500).json(err.message);
@@ -118,11 +118,27 @@ class authController {
   async registerAdmin(req, res) {
     try {
       const newManager = await authService.authenticateAdmin(req);
-
+      
       if (newManager) {
         res.status(200).json(newManager);
       } else {
         res.status(400).json({ error: "Erro no registro" });
+      }
+    } catch (err) {
+      res.status(500).json(err.message);
+    }
+  }
+
+  async validateInvite(req, res) {
+    try {
+      const info = await authService.validateInvite(req);
+
+      if (info) {
+        res.status(200).json(info);
+      } else {
+        res
+          .status(400)
+          .json({ error: "Não foi possível requisitar as informações." });
       }
     } catch (err) {
       res.status(500).json(err.message);

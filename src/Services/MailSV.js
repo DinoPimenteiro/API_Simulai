@@ -1,8 +1,10 @@
 import transporter from "../config/mailConfig.js";
-import jwt from 'jsonwebtoken';
-import { verifyTOTP, generateTotp} from "../config/2FAConfig.js";
+import jwt from "jsonwebtoken";
+import { generateTotp } from "../config/2FAConfig.js";
+import InviteTokenRepo from "../Repositories/InviteTokenRepo.js";
+import RfshTokenRepo from "../Repositories/RfshTokenRepo.js";
 
-const ROUTE = '/admin/invite/';
+const ROUTE = "/admin/register/";
 
 class mailService {
   async sendEmail(userMail) {
@@ -28,46 +30,44 @@ class mailService {
   }
 
   async recruitEmail(email) {
-    const timeLimit = new Date(Date.now() + 24 * 60 * 1000)
+    const timeLimit = new Date(Date.now() + 24 * 60 * 1000);
 
-    // http://localhost:4000/admin/invite/{tokenUUID}
-    const invitationaLink = `${process.env.APP_URL}${ROUTE}`
+    const { qrCodeLink, secret, token } = await generateTotp(email);
 
-    const { qrCodeLink, secret, token} = await generateTotp(email);
-
-    const payload = {
+    const adminInfo = {
       email: email,
-      role: 'admin',
-      type: 'recruit',
+      role: "Manager",
       secret: secret,
-      totpCode: token,
-      qrcode: qrCodeLink
+      qrcode: qrCodeLink,
+      expiresAt: timeLimit,
+    };
+
+    const savedInvite = await InviteTokenRepo.saveToken(adminInfo);
+
+    if (!savedInvite) {
+      throw new Error("Não salvou o invite.");
     }
 
-    const recruitToken = jwt.sign(payload, process.env.JWT_SECRET, {
-      expiresIn: '10m',
-    });
+    // http://localhost:4000/admin/register/:id
+    const invitationaLink = `${process.env.APP_URL}${ROUTE}${savedInvite._id}`;
 
     const body = {
       from: process.env.CLIENT_ID,
       to: email,
       subject: "Bem Vindo a SIMULAI",
       html: `Seja muito bem vindo a equipe de adminstradores da SIMULAI. Clique <a href="${invitationaLink}"> AQUI </a>`,
-      text: `Link para cadastro de administrador: ${invitationaLink}`
-    }
+      text: `Link para cadastro de administrador: ${invitationaLink}`,
+    };
 
-    
-    try{
+    try {
       const sent = await transporter.sendMail(body);
 
       return {
         sent,
-        timeLimit,
-        recruitToken,
         invitationaLink
-      }
-    } catch(err){
-      throw new Error(err.message)
+      };
+    } catch (err) {
+      throw new Error(err.message);
     }
   }
 }

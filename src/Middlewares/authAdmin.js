@@ -10,7 +10,7 @@ export default async function authUser(req, res, next) {
     try {
       const payload = jwt.verify(token, process.env.JWT_SECRET);
 
-      if(payload.role !== "Manager" || payload.role !== "Boss"){
+      if(payload.role === "Manager" || payload.role === "Boss"){
         req.admin = payload;
         next();
       } else {

@@ -1,13 +1,14 @@
 import { Router } from "express";
 import authController from "../Controllers/authController.js";
 import authUser from "../Middlewares/authUser.js";
+import authAdmin from '../Middlewares/authAdmin.js'
 
 const router = Router();
 
 router.post("/login", authController.login);
 router.put("/refresh", authController.refresh);
-router.delete("/logout", authUser, authController.logout);
-router.post("/admin/invite", authUser, authController.recruitMail);
-router.post("admin/register", authUser, authController.registerAdmin);
+router.delete("/logout", authController.logout);
+router.post("/admin/register/:id", authController.registerAdmin);
+router.get("/admin/register/:id", authController.validateInvite);
 
-export default router;
+export default router; 

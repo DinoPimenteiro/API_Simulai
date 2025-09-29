@@ -1,7 +1,7 @@
 # Lista tarefas
 
-- Colocar sob controle do admin todos os recursos descritos na documentação;
 - Testar API inteira com o novo fluxo de tokens;
+- Colocar sob controle do admin todos os recursos descritos na documentação;
 - Testar as funcionalidades de admin e retornar o qrcode;
 - Criar os administradores do tipo Boss diretamente no banco para enviar email de recrutamento;
 

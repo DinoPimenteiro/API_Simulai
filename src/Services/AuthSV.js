@@ -13,6 +13,7 @@ import {
 } from "../utils/generalValidations.js";
 import AdminRepo from "../Repositories/AdminRepo.js";
 import { verifyTOTP } from "../config/2FAConfig.js";
+import InviteTokenRepo from "../Repositories/InviteTokenRepo.js";
 
 class authService {
   //Login
@@ -30,10 +31,53 @@ class authService {
       const client = await ClientRepo.findEmail(email);
 
       if (!client) {
-        throw new Error("The user does not exists");
+        const admin = await AdminRepo.findByEmail(email);
+
+        if (!admin) {
+          throw new Error("");
+        }
+
+        console.log(password, admin.passwordHash);
+        const validAdmin = await ComparePass(password, admin.passwordHash);
+
+        if (validAdmin) {
+          const payload = {
+            id: admin._id,
+            email: admin.email,
+            type: "acess",
+            role: "Boss",
+          };
+
+          const acessToken = jwt.sign(payload, process.env.JWT_SECRET, {
+            expiresIn: "15m",
+          });
+
+          const rawToken = crypto.randomBytes(40).toString("hex");
+          const hashToken = cryptoHash(rawToken);
+
+          const savedToken = await RefreshTokenRepo.saveToken({
+            token: hashToken,
+            userId: admin._id,
+            userEmail: admin.email,
+            type: "acess",
+            role: admin.role,
+            device: device,
+            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+          });
+
+          if (!savedToken) {
+            throw new Error("Not possible to save in database.");
+          }
+
+          // Mudar depois, manter só para testes
+          return {
+            acessToken: acessToken,
+            rawToken: rawToken,
+          };
+        }
       }
 
-      const user = ComparePass(password, client.passwordHash);
+      const user = await ComparePass(password, client.passwordHash);
 
       if (user) {
         const payload = {
@@ -79,6 +123,7 @@ class authService {
 
   async refresh(req) {
     try {
+      const device = req.headers["user-agent"];
       const rawToken = getToken(req);
 
       if (!rawToken) {
@@ -102,8 +147,6 @@ class authService {
       if (refreshToken.type !== "acess") {
         throw new Error("O token precisa ser do tipo: acess");
       }
-
-      const device = req.headers["user-agent"];
 
       const payload = {
         id: refreshToken.userId,
@@ -154,7 +197,7 @@ class authService {
 
       const hashed = cryptoHash(token);
       const refreshToken = await RefreshTokenRepo.findByToken(hashed);
-      
+
       if (!refreshToken) {
         throw new Error("Invalid token.");
       }
@@ -241,7 +284,7 @@ class authService {
         throw new Error("");
       }
 
-      if(userToken.type !== 'recover_mail'){
+      if (userToken.type !== "recover_mail") {
         throw new Error("Token type must be recover_mail");
       }
 
@@ -249,8 +292,8 @@ class authService {
         const payload = {
           id: userToken.userId,
           email: userToken.userEmail,
-          type: 'recover',
-          role: 'client'
+          type: "recover",
+          role: "client",
         };
 
         const acessTk = jwt.sign(payload, process.env.JWT_SECRET, {
@@ -298,39 +341,30 @@ class authService {
   async sendRecruitEmail(req) {
     try {
       const { email } = req.body;
-      const { sent, timeLimit, recruitToken } = await mailService.recruitEmail(
-        email
-      );
+      const { sent, invitationaLink } = await mailService.recruitEmail(email);
 
       const rawToken = getToken(req);
 
       if (!rawToken) {
-        throw new Error("oDAF");
+        throw new Error("");
       }
 
       const hashedToken = cryptoHash(rawToken);
+
       const token = await RefreshTokenRepo.findByToken(hashedToken);
 
       if (!token) {
         throw new Error("Token was not found in database.");
       }
 
-      if(token.role !== 'admin'){
-        throw new Error("Unauthorized.")
+      if (token.role !== "Boss") {
+        throw new Error("Unauthorized.");
       }
 
-      if (!sent.accepted) {
-        throw new Error("Email was not sent.");
-      }
-
-      if (recruitToken) {
+      if (sent.accepted) {
         return {
-          recruitToken,
-          time: timeLimit
+          invitationaLink,
         };
-
-      } else {
-        throw new Error("jwt payload error");
       }
     } catch (err) {
       throw new Error(err.message);
@@ -338,8 +372,32 @@ class authService {
   }
 
   // Cadastro de admin
+  async validateInvite(req) {
+    try {
+      const { id } = req.params;
+
+      const newInvite = await InviteTokenRepo.findById(id);
+
+      if (!newInvite) {
+        throw new Error("Invite admin error");
+      }
+
+      if (newInvite.used) {
+        throw new Error("Invite admin");
+      }
+
+      return {
+        email: newInvite.email,
+        qrcode: newInvite.qrcode,
+      };
+    } catch (err) {
+      throw new Error(err.message);
+    }
+  }
+
   async authenticateAdmin(req) {
     try {
+      const { id } = req.params;
       const device = req.headers["user-agent"];
 
       const { name, email, age, password, code } = req.body;
@@ -351,37 +409,41 @@ class authService {
       }
 
       // Utilizar o mesmo email que o convite foi utilizado.
-      const { emailPayload } = req.user;
+      const newAdm = await InviteTokenRepo.findById(id);
 
-      if (!emailPayload || email !== emailPayload) {
-        throw new Error("Missing email/token.");
+      if (!newAdm) {
+        throw new Error("Invite admin error");
       }
 
-      //Colocar validação de tempo;
+      if (newAdm.used) {
+        throw new Error("Invite admin expired");
+      }
+
+      //Colocar validação de tempo;'
 
       validateEmail(email);
       validateAge(age);
       validateName(name);
 
       if (validatePassword(password)) {
-        passwordHash = PassHash(passwordHash);
+        passwordHash = await PassHash(password);
       }
 
-      const validationTotp = verifyTOTP(req.user.secret, code);
+      verifyTOTP(newAdm.secret, code.toString());
 
-      if (validationTotp) {
-        const newAdmin = await AdminRepo.save({
-          name,
-          email,
-          passwordHash,
-          age,
-          secret: code,
-          role: "Manager",
-        });
-        return newAdmin;
-      } else {
-        throw new Error("FODASE FILHO DA PUTA");
-      }
+      const newManager = await AdminRepo.save({
+        name,
+        email,
+        passwordHash,
+        age,
+        secret: newAdm.secret,
+        role: "Manager",
+      });
+
+      newAdm.used = true;
+      await newAdm.save();
+
+      return newManager;
     } catch (err) {
       throw new Error(err.message);
     }

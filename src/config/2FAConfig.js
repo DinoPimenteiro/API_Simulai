@@ -14,10 +14,8 @@ export async function generateTotp(email, appName = "SimulAI") {
   };
 }
 
-export function verifyTOTP(secret, token){
-  const validate = authenticator.verify({ secret: secret, token: token });
-
-  if(!validate){
-    throw new Error("Invalid credentials.")
-  }
+export function verifyTOTP(secret, token) {
+  const valid = authenticator.verify({ secret, token, window: 2 });
+  if (!valid) throw new Error("Código TOTP inválido.");
 }
+

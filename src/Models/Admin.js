@@ -14,7 +14,7 @@ const AdminSchema = new Schema({
   },
   secret: {
     type: String,
-    required: true,
+    required: false,
   }
 });
 

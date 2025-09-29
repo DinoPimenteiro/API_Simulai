@@ -1,14 +1,5 @@
-import jwt from 'jsonwebtoken'
+import AdminRepo from "./src/Repositories/AdminRepo.js";
 
-const payload = {
-  email: "kjads",
-  secret: "jhbdaw",
-  totpCode: "jhbdaw",
-  qrcode: "jhbdaw",
-};
+const coisa = await AdminRepo.getAll();
 
-const recruitToken = jwt.sign(payload,"coissa", {
-  expiresIn: "15m",
-});
-
-console.log(recruitToken)
+console.log(coisa)

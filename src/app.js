@@ -3,6 +3,7 @@ import cookieParser from 'cookie-parser';
 import userRouter from './routes/userRoutes.js';
 import mailRouter from './routes/mailRoutes.js';
 import authRouter from './routes/authRoutes.js';
+import adminRouter from './routes/adminRoutes.js';
 
 const app = e();
 
@@ -14,6 +15,7 @@ app.use(cookieParser());
 app.use(userRouter)
 app.use(mailRouter)
 app.use(authRouter)
+app.use(adminRouter)
 
 
 export default app;
