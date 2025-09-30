@@ -3,11 +3,7 @@ import AdminRepo from "../Repositories/AdminRepo.js";
 import validator from "validator";
 import { PassHash } from "../utils/hashUtils.js";
 import { Capitalize } from "../utils/stringUtils.js";
-import {
-  validateAge,
-  validateEmail,
-  validateName,
-} from "../utils/generalValidations.js";
+import GeneralValidations from "../utils/generalValidations.js";
 
 class adminService {
   async register(req) {
@@ -25,17 +21,14 @@ class adminService {
       }
 
       //Consultar docs
-      if (validator.isStrongPassword(password)) {
-        passwordHash = await PassHash(password);
-      } else {
-        throw new Error("Weak password.");
-      }
+      GeneralValidations.validatePassword(password);
+      passwordHash = await PassHash(password)
 
-      validateEmail(email);
+      GeneralValidations.validateEmail(email);
 
-      validateName(name);
+      GeneralValidations.validateName(name);
 
-      validateAge(age);
+      GeneralValidations.validateAge(age);
 
       const admin = await AdminRepo.save({
         name,

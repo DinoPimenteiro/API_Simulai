@@ -1,8 +1,6 @@
 import transporter from "../config/mailConfig.js";
-import jwt from "jsonwebtoken";
 import { generateTotp } from "../config/2FAConfig.js";
 import InviteTokenRepo from "../Repositories/InviteTokenRepo.js";
-import RfshTokenRepo from "../Repositories/RfshTokenRepo.js";
 
 const ROUTE = "/admin/register/";
 

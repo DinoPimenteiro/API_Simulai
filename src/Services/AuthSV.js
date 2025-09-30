@@ -5,12 +5,7 @@ import ClientRepo from "../Repositories/ClientRepo.js";
 import mailService from "./MailSV.js";
 import { ComparePass, cryptoHash, PassHash } from "../utils/hashUtils.js";
 import getToken from "../utils/getToken.js";
-import {
-  validateAge,
-  validateEmail,
-  validateName,
-  validatePassword,
-} from "../utils/generalValidations.js";
+import GeneralValidations from "../utils/generalValidations.js";
 import AdminRepo from "../Repositories/AdminRepo.js";
 import { verifyTOTP } from "../config/2FAConfig.js";
 import InviteTokenRepo from "../Repositories/InviteTokenRepo.js";
@@ -26,7 +21,7 @@ class authService {
         throw new Error("missing user-agent.");
       }
 
-      validateEmail(email);
+      GeneralValidations.validateEmail(email);
 
       const client = await ClientRepo.findEmail(email);
 
@@ -229,7 +224,7 @@ class authService {
         throw new Error("Not identified device.");
       }
 
-      validateEmail(email);
+      GeneralValidations.validateEmail(email);
 
       const user = await ClientRepo.findEmail(email);
 
@@ -313,9 +308,9 @@ class authService {
     try {
       const { password } = req.body;
 
-      validatePassword(password);
+      GeneralValidations.validatePassword(password);
 
-      const passwordHash = cryptoHash(password);
+      const passwordHash = PassHash(password);
 
       const user = await ClientRepo.update(req.user.id, {
         passwordHash: passwordHash,
@@ -341,12 +336,11 @@ class authService {
   async sendRecruitEmail(req) {
     try {
       const { email } = req.body;
-      const { sent, invitationaLink } = await mailService.recruitEmail(email);
 
       const rawToken = getToken(req);
 
       if (!rawToken) {
-        throw new Error("");
+        throw new Error("refresh Token was not found.");
       }
 
       const hashedToken = cryptoHash(rawToken);
@@ -360,6 +354,8 @@ class authService {
       if (token.role !== "Boss") {
         throw new Error("Unauthorized.");
       }
+
+      const { sent, invitationaLink } = await mailService.recruitEmail(email);
 
       if (sent.accepted) {
         return {
@@ -402,6 +398,7 @@ class authService {
 
       const { name, email, age, password, code } = req.body;
       let passwordHash;
+      let codigo;
 
       // Pôr verificação de dispositivo para atividade suspeita.
       if (!device) {
@@ -421,16 +418,18 @@ class authService {
 
       //Colocar validação de tempo;'
 
-      validateEmail(email);
-      validateAge(age);
-      validateName(name);
+      GeneralValidations.validateEmail(email);
+      GeneralValidations.validateAge(age);
+      GeneralValidations.validateName(name);
 
-      if (validatePassword(password)) {
+      if (GeneralValidations.validatePassword(password)) {
         passwordHash = await PassHash(password);
       }
 
-      verifyTOTP(newAdm.secret, code.toString());
+      codigo = code.toString();
+      verifyTOTP(newAdm.secret, codigo);
 
+      console.log(newAdm.secret)
       const newManager = await AdminRepo.save({
         name,
         email,

@@ -4,10 +4,10 @@ import validator from "validator";
 import { PassHash, ComparePass } from "../utils/hashUtils.js";
 import { Capitalize } from "../utils/stringUtils.js";
 import { ValidLevel, validComment } from "../utils/userValidator.js";
-import { validateAge, validateEmail, validateName, validatePassword, validateUser } from "../utils/generalValidations.js";
+import GeneralValidations from "../utils/generalValidations.js";
 
 class clientService {
-  async register(req, res) {
+  async register(req) {
     var { name, email, password, age } = req.body;
     var passwordHash;
 
@@ -28,11 +28,11 @@ class clientService {
         throw new Error("Weak password.");
       }
 
-      validateEmail(email)
-    
-      validateName(name)
+      GeneralValidations.validateEmail(email);
 
-      validateAge(age)
+      GeneralValidations.validateName(name);
+
+      GeneralValidations.validateAge(age);
 
       const client = await ClientRepo.save({ name, email, age, passwordHash });
 
@@ -71,7 +71,7 @@ class clientService {
     try {
       const user = await ClientRepo.findID(id);
 
-      validateUser(user)
+      GeneralValidations.validateUser(user)
 
       return {
         id: user._id,
@@ -91,7 +91,7 @@ class clientService {
     try {
       let user = await ClientRepo.findID(id);
 
-      validateUser(user)
+      GeneralValidations.validateUser(user)
 
       const userSessions = await RefreshTokenRepo.destroyManyTokens(id);
       const deleted = await ClientRepo.destroy(id);
@@ -100,6 +100,7 @@ class clientService {
         userDeleted: deleted,
         DeletedSessions: userSessions,
       };
+
     } catch (err) {
       throw new Error(err.message);
     }
@@ -111,7 +112,7 @@ class clientService {
 
       const user = await ClientRepo.findEmail(email);
 
-      validateUser(user)
+      GeneralValidations.validateUser(user)
 
       var pass = ComparePass(password, user.passwordHash);
 
@@ -124,7 +125,7 @@ class clientService {
       var name = validator.trim(name);
       var age = parseInt(age, 10);
 
-      validateName(name)
+      GeneralValidations.validateName(name)
 
       if (job === "" || !job) {
         throw new Error("Invalid job.");
@@ -138,11 +139,11 @@ class clientService {
         throw new Error("Invalid level.");
       }
 
-      validateAge(age)
+      GeneralValidations.validateAge(age)
 
-      validatePassword(password)
+      GeneralValidations.validatePassword(password)
 
-      const passwordHash = await PassHash(password, 13);
+      const passwordHash = await PassHash(password);
 
       const edited = await ClientRepo.update(id, {
         name,
@@ -151,6 +152,7 @@ class clientService {
         job,
         level,
       });
+
       return {
         id: edited._id,
         name: edited.name,
@@ -205,7 +207,7 @@ class clientService {
   }
 
   // Pesquisa para agregar/completar o cadastro do usuário;
-  async research(req) { 
+  async research(req) {
   }
 }
 

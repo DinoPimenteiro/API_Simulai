@@ -1,36 +1,40 @@
 import validator from "validator";
 
-export function validatePassword(password) {
-  if (!validator.isStrongPassword(password)) {
-    throw new Error("Weak password");
+class GeneralValidations {
+  validatePassword(password) {
+    if (!validator.isStrongPassword(password)) {
+      throw new Error("Weak password");
+    }
+    return true;
   }
-  return true;
-}
 
-export function validateEmail(email) {
+  validateEmail(email) {
     if (!validator.isEmail(email) || !email) {
-        throw new Error("Invalid Email");
+      throw new Error("Invalid Email");
     }
     return true;
-}
+  }
 
-export function validateName (name) {
+  validateName(name) {
     if (!name || name.trim() === "") {
-        throw new Error("Invalid name.");
+      throw new Error("Invalid name.");
     }
     return true;
-}
+  }
 
-export function validateAge(age) {
+  validateAge(age) {
     if (age <= 13 || isNaN(age)) {
-        throw new Error("Invalid age");
+      throw new Error("Invalid age");
     }
     return true;
+  }
+
+  validateUser(user) {
+    if (!user) {
+      throw new Error("Invalid user.");
+    }
+    return true;
+  }
 }
 
-export function validateUser(user){
-    if (!user) {
-        throw new Error("Invalid user.");
-    }
-    return true;
-}
+export default new GeneralValidations();
