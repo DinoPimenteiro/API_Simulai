@@ -40,6 +40,12 @@ class mailService {
       expiresAt: timeLimit,
     };
 
+    const findInvite = await InviteTokenRepo.findByUser(email);
+    
+    if(findInvite){
+      throw new Error("Pending invite.")
+    }
+
     const savedInvite = await InviteTokenRepo.saveToken(adminInfo);
 
     if (!savedInvite) {

@@ -1,4 +1,3 @@
-import RefreshTokenRepo from "../Repositories/RfshTokenRepo.js";
 import AdminRepo from "../Repositories/AdminRepo.js";
 import validator from "validator";
 import { PassHash } from "../utils/hashUtils.js";
@@ -21,9 +20,8 @@ class adminService {
       }
 
       //Consultar docs
-      GeneralValidations.validatePassword(password);
-      passwordHash = await PassHash(password)
-
+      passwordHash = await GeneralValidations.validatePassword(password);
+       
       GeneralValidations.validateEmail(email);
 
       GeneralValidations.validateName(name);
@@ -50,8 +48,11 @@ class adminService {
     }
   }
 
+  async editComment() {
+
+  }
+
   async updateArchives() {}
-  async editComment() {}
 }
 
 export default new adminService();

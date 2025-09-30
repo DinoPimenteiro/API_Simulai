@@ -12,10 +12,10 @@ import InviteTokenRepo from "../Repositories/InviteTokenRepo.js";
 
 class authService {
   //Login
-  async authenticate(req) {
+  async authenticate(userdata, headers) {
     try {
-      const { password, email } = req.body;
-      const device = req.headers["user-agent"];
+      const { password, email } = userdata;
+      const device = headers;
 
       if (!device) {
         throw new Error("missing user-agent.");
@@ -29,10 +29,9 @@ class authService {
         const admin = await AdminRepo.findByEmail(email);
 
         if (!admin) {
-          throw new Error("");
+          throw new Error("user was not found.");
         }
 
-        console.log(password, admin.passwordHash);
         const validAdmin = await ComparePass(password, admin.passwordHash);
 
         if (validAdmin) {
@@ -140,7 +139,7 @@ class authService {
       }
 
       if (refreshToken.type !== "acess") {
-        throw new Error("O token precisa ser do tipo: acess");
+        throw new Error("The type of token need to be 'acess'");
       }
 
       const payload = {
@@ -198,7 +197,7 @@ class authService {
       }
 
       if (refreshToken.type !== "acess") {
-        throw new Error("O token precisa ser de acesso.");
+        throw new Error("The type of token need to be 'acess'");
       }
 
       const deletedToken = await RefreshTokenRepo.destroyToken(
@@ -308,9 +307,7 @@ class authService {
     try {
       const { password } = req.body;
 
-      GeneralValidations.validatePassword(password);
-
-      const passwordHash = PassHash(password);
+      const passwordHash = await GeneralValidations.validatePassword(password);
 
       const user = await ClientRepo.update(req.user.id, {
         passwordHash: passwordHash,
@@ -422,14 +419,11 @@ class authService {
       GeneralValidations.validateAge(age);
       GeneralValidations.validateName(name);
 
-      if (GeneralValidations.validatePassword(password)) {
-        passwordHash = await PassHash(password);
-      }
+       passwordHash = await GeneralValidations.validatePassword(password)
 
       codigo = code.toString();
       verifyTOTP(newAdm.secret, codigo);
 
-      console.log(newAdm.secret)
       const newManager = await AdminRepo.save({
         name,
         email,

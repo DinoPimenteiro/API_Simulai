@@ -1,11 +1,15 @@
 import validator from "validator";
+import { PassHash } from "./hashUtils.js";
 
 class GeneralValidations {
-  validatePassword(password) {
+  async validatePassword(password) {
+    let passwordHash;
+
     if (!validator.isStrongPassword(password)) {
       throw new Error("Weak password");
+    } else {
+      return passwordHash = await PassHash(password)
     }
-    return true;
   }
 
   validateEmail(email) {
