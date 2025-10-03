@@ -4,14 +4,13 @@ const { Schema } = mongoose;
 const { ObjectId } = Schema;
 
 const CommentSchema = new Schema({
-
+  title: String,
+  body: String,
   rating: Number,
   type: {
     type: String,
-    enum: ["Evaluation", "Question"]
+    enum: ["Evaluation", "Help"] 
   },
-  title: String, // Ajuda ou avaliação.
-  body: String,
   createdAt: Date,
   UpdatedAt: Date,
 })

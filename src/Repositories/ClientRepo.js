@@ -23,6 +23,10 @@ class ClientRepo {
   async save(data) {
     return Client.create(data);
   }
+
+  async saveComment(user, data){
+    return user.comment.push(data);
+  }
 }
 
 export default new ClientRepo();

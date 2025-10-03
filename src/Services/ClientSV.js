@@ -33,7 +33,6 @@ class clientService {
 
       const client = await ClientRepo.save({ name, email, age, passwordHash });
 
-      
       const { acessToken } = await AuthSV.authenticate(
         {
           password: password,
@@ -41,7 +40,7 @@ class clientService {
         },
         req.headers["user-agent"]
       );
-      
+
       return {
         id: client._id,
         name: client.name,
@@ -172,13 +171,13 @@ class clientService {
   async comment(data, user) {
     //Precisa de autenticação de cadastro
     try {
-      var { id } = user;
-      var { type, body, rating, title } = data;
+      let { type, body, rating, title } = data;
+      let id = user;
 
-      const exists = ClientRepo.findID(id);
+      const client = await ClientRepo.findID(id);
 
-      if (!exists) {
-        throw new Error("");
+      if (!client) {
+        throw new Error("User not found.");
       }
 
       if (parseInt(rating, 10) > 5) {
@@ -194,17 +193,28 @@ class clientService {
       }
 
       if (!validComment(type)) {
-        throw new Error("");
+        throw new Error("Invalid comment type.");
       }
 
-      const userComment = await ClientRepo.save({
-        comment: { body, title, rating, type },
+      const userComment = await ClientRepo.saveComment(client, {
+        title,
+        body,
+        rating,
+        type,
       });
-      return {
-        name: userComment.name,
-        email: userComment.email,
-        comments: userComment.comment,
-      };
+
+      if (userComment) {
+        const saved = await client.save();
+
+        return {
+          id: saved._id,
+          name: saved.name,
+          email: saved.email,
+          comments: saved.comment,
+        };
+      } else {
+        throw new Error("Not possible to save comment.")
+      }
     } catch (err) {
       throw new Error(err.message);
     }

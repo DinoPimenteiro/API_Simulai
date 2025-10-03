@@ -55,7 +55,7 @@ class clientController {
   }
   async comment(req, res) {
     try {
-      const comment = await clientService.comment(req.body, req.user);
+      const comment = await clientService.comment(req.body, req.params.id);
 
       if (comment) {
         res.status(200).json(comment);
