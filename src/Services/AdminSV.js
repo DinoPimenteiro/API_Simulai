@@ -1,6 +1,6 @@
 import AdminRepo from "../Repositories/AdminRepo.js";
 import validator from "validator";
-import { PassHash } from "../utils/hashUtils.js";
+import ClientRepo from "../Repositories/ClientRepo.js";
 import { Capitalize } from "../utils/stringUtils.js";
 import GeneralValidations from "../utils/generalValidations.js";
 
@@ -21,7 +21,7 @@ class adminService {
 
       //Consultar docs
       passwordHash = await GeneralValidations.validatePassword(password);
-       
+
       GeneralValidations.validateEmail(email);
 
       GeneralValidations.validateName(name);
@@ -48,11 +48,54 @@ class adminService {
     }
   }
 
-  async editComment() {
+  async getAllComment() {
+    try {
+      const usersComments = await ClientRepo.findAll();
 
+      if (!usersComments) {
+        throw new Error("Not possible to find users.");
+      }
+      const allComments = usersComments.map((comment) => ({
+        id: comment.id,
+        email: comment.email,
+        comments: comment.comment,
+      }));
+
+      return allComments;
+    } catch (err) {
+      throw new Error(err.message);
+    }
   }
 
-  async updateArchives() {}
+  async deleteComment(commentId, userId) {
+    try {
+      const userID = userId;
+      const commentID = commentId;
+
+      if (!userID || !commentID) {
+        throw new Error("Missing parameters.");
+      }
+
+      const client = await ClientRepo.findID(userID);
+
+      if (!client) {
+        throw new Error("Client doesn't exists.");
+      }
+
+      const removedComment = await ClientRepo.deleteComment(userID, commentID);
+
+      if(removedComment){
+        return {
+          message: "Comentário removido.",
+          removedComment
+        };
+      } else {
+        throw new Error("vixeeee")
+      }
+    } catch (err) {
+      throw new Error(err.message);
+    }
+  }
 }
 
 export default new adminService();
