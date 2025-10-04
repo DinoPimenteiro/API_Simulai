@@ -221,7 +221,7 @@ class clientService {
   }
 
   // Pesquisa para agregar/completar o cadastro do usuário;
-  async research(req) {}
+  async research(data) {}
 }
 
 export default new clientService();

@@ -1,5 +1,4 @@
-import AdminRepo from "./src/Repositories/AdminRepo.js";
+let a = new Date;
+let b 
 
-const coisa = await AdminRepo.getAll();
-
-console.log(coisa)
+console.log(a)

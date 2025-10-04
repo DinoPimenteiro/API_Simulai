@@ -4,7 +4,8 @@ import { Router } from "express";
 const router = Router();
 
 router.post("/admin/register", adminController.register);
-router.get("/admin/comments", adminController.getComments);
+router.get("/admin/commentsHelp", adminController.getCommentsHelp);
+router.get("/admin/commentsEvaluation", adminController.getCommentsEvaluation);
 // Testar
 router.delete("/admin/user/:userId/comment/:commentId", adminController.deleteComment);
 

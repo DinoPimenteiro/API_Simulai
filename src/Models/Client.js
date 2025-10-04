@@ -33,7 +33,7 @@ const ClientSchema = new Schema({
 });
 
 const userLevel = ["Begginer", "Intermediate", "Advanced"];
-const commentType = ["Question", "Evaluation"];
+const commentType = ["Help", "Evaluation"]; 
 
 const Client = mongoose.model("client", ClientSchema);
 

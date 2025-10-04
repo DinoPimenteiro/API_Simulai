@@ -2,7 +2,11 @@ import { Client } from "../Models/Client.js";
 
 class ClientRepo {
   async findAll() {
-    return Client.find().lean(); // O QUE CARALHOS É LEAN PORRA
+    return Client.find().lean(); 
+  }
+
+  async findComment(type) {
+    return Client.find({ "comment.type" : type }); 
   }
 
   async findID(id) {
@@ -29,7 +33,7 @@ class ClientRepo {
   }
 
   async deleteComment(userId, commentId) {
-    Client.updateOne(
+    return Client.updateOne(
       { _id: userId },
       { $pull: { comment: { _id: commentId } } }
     );
