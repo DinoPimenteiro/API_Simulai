@@ -5,8 +5,8 @@ class ClientRepo {
     return Client.find().lean(); 
   }
 
-  async findComment(type) {
-    return Client.find({ "comment.type" : type }); 
+  async findComment() {
+  // Colocar a busca com o agregation;
   }
 
   async findID(id) {

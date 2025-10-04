@@ -30,7 +30,7 @@ class mailService {
   async recruitEmail(email) {
     const timeLimit = new Date(Date.now() + 24 * 60 * 1000);
 
-    const { qrCodeLink, secret, token } = await generateTotp(email);
+    const { qrCodeLink, secret } = await generateTotp(email);
 
     const adminInfo = {
       email: email,

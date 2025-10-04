@@ -17,5 +17,7 @@ export async function generateTotp(email, appName = "SimulAI") {
 export function verifyTOTP(secret, token) {
   const valid = authenticator.verify({ secret, token, window: 2 });
   if (!valid) throw new Error("Código TOTP inválido.");
+
+  return true
 }
 

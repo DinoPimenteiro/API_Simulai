@@ -2,6 +2,7 @@
 
 - Criar a criptografia do secret por parte do cadastro e login de administrador;
 - Testar tudo e validar a ordem dos procedimentos (por exemplo, dá erro e mesmo assim executa algum comando no banco de dados);
+- Validar o token passado na autorização pertence a aquele usuário;
 
 - Implementar as seguintes funcionalidades para **Administradores**:
   - Verificação com TOTP (authenticator) no login de administrador;

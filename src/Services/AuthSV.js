@@ -1,14 +1,14 @@
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
+import { verifyTOTP } from "../config/2FAConfig.js";
 import RefreshTokenRepo from "../Repositories/RfshTokenRepo.js";
+import InviteTokenRepo from "../Repositories/InviteTokenRepo.js";
 import ClientRepo from "../Repositories/ClientRepo.js";
+import AdminRepo from "../Repositories/AdminRepo.js";
 import mailService from "./MailSV.js";
 import { ComparePass, cryptoHash, PassHash } from "../utils/hashUtils.js";
 import getToken from "../utils/getToken.js";
 import GeneralValidations from "../utils/generalValidations.js";
-import AdminRepo from "../Repositories/AdminRepo.js";
-import { verifyTOTP } from "../config/2FAConfig.js";
-import InviteTokenRepo from "../Repositories/InviteTokenRepo.js";
 
 class authService {
   //Login
@@ -32,42 +32,10 @@ class authService {
           throw new Error("user was not found.");
         }
 
-        const validAdmin = await ComparePass(password, admin.passwordHash);
+        const message = await this.adminRegister(password, admin);
 
-        if (validAdmin) {
-          const payload = {
-            id: admin._id,
-            email: admin.email,
-            type: "acess",
-            role: "Boss",
-          };
-
-          const acessToken = jwt.sign(payload, process.env.JWT_SECRET, {
-            expiresIn: "15m",
-          });
-
-          const rawToken = crypto.randomBytes(40).toString("hex");
-          const hashToken = cryptoHash(rawToken);
-
-          const savedToken = await RefreshTokenRepo.saveToken({
-            token: hashToken,
-            userId: admin._id,
-            userEmail: admin.email,
-            type: "acess",
-            role: admin.role,
-            device: device,
-            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-          });
-
-          if (!savedToken) {
-            throw new Error("Not possible to save in database.");
-          }
-
-          // Mudar depois, manter só para testes
-          return {
-            acessToken: acessToken,
-            rawToken: rawToken,
-          };
+        return {
+          message
         }
       }
 
@@ -109,6 +77,74 @@ class authService {
         };
       } else {
         throw new Error("Invalid credentials.");
+      }
+    } catch (err) {
+      throw new Error(err.message);
+    }
+  }
+
+  async adminRegister(password, admin) {
+    const validAdmin = await ComparePass(password, admin.passwordHash);
+
+    if (validAdmin) {
+      return {
+        message: `${process.env.APP_URL}/admin/login/${admin._id}`,
+      };
+    } else {
+      throw new Error("Incorrect password");
+    }
+  }
+
+  async validateAdminCode(id, data, headers) {
+    try {
+      const { code } = data;
+      const device = headers;
+      const adm = await AdminRepo.findById(id);
+
+      if(!adm){
+        throw new Error("Manager not found.")
+      }
+
+      if(!device){
+        throw new Error("Missing device.")
+      }
+
+      const verify = verifyTOTP(adm.secret, code.toString());
+
+      if (verify) {
+        const payload = {
+          id: adm._id,
+          email: adm.email,
+          type: "acess",
+          role: adm.role,
+        };
+
+        const acessToken = jwt.sign(payload, process.env.JWT_SECRET, {
+          expiresIn: "15m",
+        });
+
+        const rawToken = crypto.randomBytes(40).toString("hex");
+        const hashToken = cryptoHash(rawToken);
+
+        const savedToken = await RefreshTokenRepo.saveToken({
+          token: hashToken,
+          userId: adm._id,
+          userEmail: adm.email,
+          type: "acess",
+          role: adm.role,
+          device: device,
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        });
+
+        if (!savedToken) {
+          throw new Error("Not possible to save in database.");
+        }
+
+        // Mudar depois, manter só para testes
+        return {
+          acessToken: acessToken,
+          rawToken: rawToken,
+        };
       }
     } catch (err) {
       throw new Error(err.message);
@@ -419,7 +455,7 @@ class authService {
       GeneralValidations.validateAge(age);
       GeneralValidations.validateName(name);
 
-       passwordHash = await GeneralValidations.validatePassword(password)
+      passwordHash = await GeneralValidations.validatePassword(password);
 
       codigo = code.toString();
       verifyTOTP(newAdm.secret, codigo);

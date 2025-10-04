@@ -3,15 +3,21 @@ import authService from "../Services/AuthSV.js";
 class authController {
   async login(req, res) {
     try {
-      const { acessToken, rawToken } = await authService.authenticate(req.body, req.headers['user-agent']);
+      const { acessToken, rawToken, message } = await authService.authenticate(
+        req.body,
+        req.headers["user-agent"]
+      );
 
+      if (message) {
+        res.status(300).json(message);
+      }
       // Ajeitar por segurança depois
-      if (rawToken) {
+      if (rawToken && !message) {
         res.cookie("refreshToken", rawToken, {
           maxAge: 7 * 24 * 60 * 60 * 1000,
         });
       } else {
-        res.json({ Error: "Missing cookie" });
+        res.json({ Error: "Missing token" });
       }
 
       if (acessToken) {
@@ -23,6 +29,32 @@ class authController {
       res.status(400).json(err.message);
     }
   }
+  async loginAdmin(req, res) {
+    try {
+      const { acessToken, rawToken } = await authService.validateAdminCode(
+        req.params.id,
+        req.body,
+        req.headers["user-agent"]
+      );
+
+      if (rawToken) {
+        res.cookie("refreshToken", rawToken, {
+          maxAge: 7 * 24 * 60 * 60 * 1000,
+        });
+      } else {
+        res.json({ Error: "Missing token" });
+      }
+
+      if (acessToken) {
+        res.status(200).json(acessToken, rawToken);
+      } else {
+        res.status(404).json({ error: "Invalid Data." });
+      }
+    } catch (err) {
+      res.status(500).json({error: err.message});
+    }
+  }
+
   async refresh(req, res) {
     try {
       const { newRawToken, updatedToken, newAcessToken } =
@@ -118,7 +150,7 @@ class authController {
   async registerAdmin(req, res) {
     try {
       const newManager = await authService.authenticateAdmin(req);
-      
+
       if (newManager) {
         res.status(200).json(newManager);
       } else {
