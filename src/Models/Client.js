@@ -20,6 +20,7 @@ const ClientSchema = new Schema({
   email: String,
   passwordHash: String,
   age: Number,
+  profileImage: String,
   level: {
     type: String,
     enum: ["Begginer", "Intermediate", "Advanced"],
