@@ -13,9 +13,9 @@ class adminController {
       res.status(500).json(err.message);
     }
   }
-  async getComments(req, res) {
+  async getCommentsHelp(req, res) {
     try {
-      const comments = await adminService.getAllComment();
+      const comments = await adminService.getHelpComment();
 
       if (comments) {
         res.status(200).json(comments);
@@ -26,6 +26,21 @@ class adminController {
       res.status(500).json(err.message);
     }
   }
+
+  async getCommentsEvaluation(req, res) {
+    try {
+      const comments = await adminService.getEvaluationComment();
+
+      if (comments) {
+        res.status(200).json(comments);
+      } else {
+        res.status(404).json({ error: "not possible to list comments." });
+      }
+    } catch (err) {
+      res.status(500).json(err.message);
+    }
+  }
+
   async deleteComment(req, res){
     try{
     const deleted = await adminService.deleteComment(req.params.commentId, req.params.userId);

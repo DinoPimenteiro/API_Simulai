@@ -5,13 +5,12 @@
 
 - Implementar as seguintes funcionalidades para **Administradores**:
   - Verificação com TOTP (authenticator) no login de administrador;
-  - Listagem, edição e deleção de comentários dos clientes;
   - Listagem das métricas dos usuários, idade, nível e avaliações;
 
 - Implementar as seguintes funcionalidades para **Clientes**
   - Possibilidade de envio de arquivos para o sistema (imagem do usuário e currículo);
   - Sistema de pesquisa com alternativas para traçar o nível do usuário;
-  - Edição e exclusão de comentário;
+  - Exclusão de comentário;
   - Pesquisa referente ao seu nível;
 
 ## Lembretes

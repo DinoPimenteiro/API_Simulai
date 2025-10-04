@@ -48,9 +48,28 @@ class adminService {
     }
   }
 
-  async getAllComment() {
+  async getEvaluationComment() {
     try {
-      const usersComments = await ClientRepo.findAll();
+      const usersComments = await ClientRepo.findComment("Evaluation");
+
+      if (!usersComments) {
+        throw new Error("Not possible to find users.");
+      }
+      const allComments = usersComments.map((comment) => ({
+        id: comment.id,
+        email: comment.email,
+        comments: comment.comment,
+      }));
+
+      return allComments;
+    } catch (err) {
+      throw new Error(err.message);
+    }
+  }
+
+  async getHelpComment() {
+    try {
+      const usersComments = await ClientRepo.findComment("Help");
 
       if (!usersComments) {
         throw new Error("Not possible to find users.");
@@ -84,13 +103,13 @@ class adminService {
 
       const removedComment = await ClientRepo.deleteComment(userID, commentID);
 
-      if(removedComment){
+      if (removedComment) {
         return {
           message: "Comentário removido.",
           removedComment
         };
       } else {
-        throw new Error("vixeeee")
+        throw new Error("erro ao comentário")
       }
     } catch (err) {
       throw new Error(err.message);
