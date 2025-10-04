@@ -6,6 +6,7 @@ import { ComparePass } from "../utils/hashUtils.js";
 import { Capitalize } from "../utils/stringUtils.js";
 import { ValidLevel, validComment } from "../utils/userValidator.js";
 import GeneralValidations from "../utils/generalValidations.js";
+import { HandleProfileImage } from "../utils/fileUtils.js";
 
 class clientService {
   async register(req) {
@@ -22,6 +23,8 @@ class clientService {
         throw new Error(`The user already exists.`);
       }
 
+      const profileImagePath = await HandleProfileImage(req);
+
       //Consultar docs
       passwordHash = await GeneralValidations.validatePassword(password);
 
@@ -31,7 +34,7 @@ class clientService {
 
       GeneralValidations.validateAge(age);
 
-      const client = await ClientRepo.save({ name, email, age, passwordHash });
+      const client = await ClientRepo.save({ name, email, age, passwordHash, profileImage: profileImagePath });
 
       const { acessToken } = await AuthSV.authenticate(
         {
@@ -46,6 +49,7 @@ class clientService {
         name: client.name,
         email: client.email,
         age: client.age,
+        profileImage: profileImagePath,
         acessToken,
       };
     } catch (err) {
