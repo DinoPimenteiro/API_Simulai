@@ -1,6 +1,7 @@
 import { Router } from "express";
 import clientController from "../Controllers/clientController.js";
 import authUser from "../Middlewares/authUser.js";
+import { HandleProfileImage } from "../utils/profileImage.js";
 
 const router = Router();
 
@@ -11,5 +12,7 @@ router.post("/user", clientController.newClient);
 router.delete("/user/:id", clientController.deleteUser);
 router.put("/user/:id", authUser, clientController.updateUser);
 router.post("/user/comment/:id", authUser, clientController.comment);
+
+router.delete("/user/:userId/comment/:commentId", authUser, clientController.comment);
 
 export default router;

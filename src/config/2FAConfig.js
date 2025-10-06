@@ -1,11 +1,14 @@
 import { authenticator } from "otplib";
 import qrcode from "qrcode";
+import { encrypt } from "../utils/encryptUtils.js";
 
 export async function generateTotp(email, appName = "SimulAI") {
-  const secret = authenticator.generateSecret();
+  let secret = authenticator.generateSecret();
   const token = authenticator.generate(secret);
   const otppath = authenticator.keyuri(email, appName, secret);
   const qrCodeLink = await qrcode.toDataURL(otppath);
+
+  secret = encrypt(secret);  
   
   return {
     qrCodeLink,

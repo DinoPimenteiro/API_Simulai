@@ -6,11 +6,13 @@ export async function HandleProfileImage(req) {
   return new Promise((resolve, reject) => {
    
     const storage = multer.diskStorage({
+
       destination: (req, file, cb) => {
         const folderPath = path.join("uploads", "profile");
         if (!fs.existsSync(folderPath)) fs.mkdirSync(folderPath, { recursive: true });
         cb(null, folderPath);
       },
+
       filename: (req, file, cb) => {
         const ext = path.extname(file.originalname);
         cb(null, `profile_${Date.now()}${ext}`);

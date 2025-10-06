@@ -96,7 +96,7 @@ class authController {
           maxAge: 8 * 60 * 1000,
         });
 
-        res.status(200).json({ refreshTk, newRawToken });
+        res.status(200).json(refreshTk);
       } else {
         //Alterar para um mensagem genérica
         res.status(400).json({ error: "failed to send email" });

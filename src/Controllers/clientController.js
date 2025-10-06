@@ -23,12 +23,11 @@ class clientController {
     }
   }
 
-  async getOne(req, res){
-    try{
+  async getOne(req, res) {
+    try {
       const user = await clientService.selectOne(req.params.id);
       res.status(200).json(user);
-
-    } catch(err){
+    } catch (err) {
       res.status(404).json(err.message);
     }
   }
@@ -62,6 +61,23 @@ class clientController {
       }
     } catch (err) {
       res.status(418).json(err.message);
+    }
+  }
+  async deleteComment(req, res) {
+    try {
+      const user = await clientService.selectOne(req.params.userId);
+
+      if (user.email === req.user.email) {
+        const excludedComment = await clientService.deleteComment(
+          req.params.userId,
+          req.params.commentId
+        );
+        res.status(200).json(excludedComment);
+      } else {
+        res.status(418).json({ error: "deu ruim" });
+      }
+    } catch (err) {
+      res.status(500).json(err.message);
     }
   }
 }

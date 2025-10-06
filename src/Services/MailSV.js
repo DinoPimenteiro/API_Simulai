@@ -1,6 +1,6 @@
 import transporter from "../config/mailConfig.js";
-import { generateTotp } from "../config/2FAConfig.js";
 import InviteTokenRepo from "../Repositories/InviteTokenRepo.js";
+import { generateTotp } from "../config/2FAConfig.js";
 
 const ROUTE = "/admin/register/";
 
@@ -12,7 +12,7 @@ class mailService {
       from: process.env.CLIENT_ID,
       to: userMail,
       subject: "Recuperação de acesso- SIMULAI",
-      html: `<h1> SIMULAI </h1> \n <h3> cód igo para recuperação de acesso: ${code} </h3>`,
+      html: `<h1> SIMULAI </h1> \n <h3> código para recuperação de acesso: ${code} </h3>`,
       text: `Código de recuperação para senha SIMULAI: ${code}`,
     };
 
@@ -28,7 +28,7 @@ class mailService {
   }
 
   async recruitEmail(email) {
-    const timeLimit = new Date(Date.now() + 24 * 60 * 1000);
+    const timeLimit = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
     const { qrCodeLink, secret } = await generateTotp(email);
 

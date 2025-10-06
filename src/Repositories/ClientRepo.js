@@ -1,12 +1,9 @@
 import { Client } from "../Models/Client.js";
 
 class ClientRepo {
+  // Manipulção de clientes;
   async findAll() {
-    return Client.find().lean(); 
-  }
-
-  async findComment() {
-  // Colocar a busca com o agregation;
+    return Client.find().lean();
   }
 
   async findID(id) {
@@ -28,8 +25,38 @@ class ClientRepo {
     return Client.create(data);
   }
 
+  // Manipulação de comentários;
   async saveComment(user, data) {
     return user.comment.push(data);
+  }
+
+  async findComments(type) {
+    const commentType = Array.isArray(type) ? type : [type];
+
+    return Client.aggregate([
+      {
+        $project: {
+          name: 1,
+          email: 1,
+          comments: {
+            $filter: {
+              input: "$comment",
+              as: "c",
+              cond: { $in: ["$$c.type", commentType] },
+            },
+          },
+          commentsCount: {
+            $size: {
+              $filter: {
+                input: "$comment",
+                as: "c",
+                cond: { $in: ["$$c.type", commentType] },
+              },
+            },
+          },
+        },
+      },
+    ]);
   }
 
   async deleteComment(userId, commentId) {
@@ -38,6 +65,46 @@ class ClientRepo {
       { $pull: { comment: { _id: commentId } } }
     );
   }
+
+  async updateComment(clientId, commentId, newStatus) {
+    return Client.updateOne(
+      { _id: clientId, "comment._id": commentId },
+      { $set: { "comment.$.status": newStatus } }
+    );
+  }
+
+  // Métricas de usuários;
+
+  async totalUsers() {
+    const totalUsers = await Client.countDocuments({ active: true });
+    return totalUsers;
+  }
+
+  async averageAge() {
+    const result = await Client.aggregate([
+      { $group: { _id: null, averageAge: { $avg: "$age" } } },
+    ]);
+
+    return result[0]?.averageAge || 0;
+  }
+
+  async ageFilter(gte, lte) {
+    const count = await Client.countDocuments({
+      age: { $gte: gte, $lte: lte },
+    });
+    return count;
+  }
+
+  async averageRating() {
+    const result = await Client.aggregate([
+      { $group: { _id: null, averageRate: { $avg: "$rate" } } },
+    ]);
+
+    return result[0]?.averageRate || 0;
+  }
+
+  // Nivel médio.
+
 }
 
 export default new ClientRepo();

@@ -6,7 +6,8 @@ import InviteTokenRepo from "../Repositories/InviteTokenRepo.js";
 import ClientRepo from "../Repositories/ClientRepo.js";
 import AdminRepo from "../Repositories/AdminRepo.js";
 import mailService from "./MailSV.js";
-import { ComparePass, cryptoHash, PassHash } from "../utils/hashUtils.js";
+import { ComparePass, cryptoHash } from "../utils/hashUtils.js";
+import { decrypt } from "../utils/encryptUtils.js";
 import getToken from "../utils/getToken.js";
 import GeneralValidations from "../utils/generalValidations.js";
 
@@ -32,11 +33,43 @@ class authService {
           throw new Error("user was not found.");
         }
 
+        if (admin.role === "Boss") {
+          const payload = {
+            id: admin._id,
+            email: admin.email,
+            type: "acess",
+            role: admin.role,
+          };
+
+          const acessToken = jwt.sign(payload, process.env.JWT_SECRET, {
+            expiresIn: "15m",
+          });
+
+          const rawToken = crypto.randomBytes(40).toString("hex");
+          const hashToken = cryptoHash(rawToken);
+
+          const savedToken = await RefreshTokenRepo.saveToken({
+            token: hashToken,
+            userId: admin._id,
+            userEmail: admin.email,
+            type: "acess",
+            role: admin.role,
+            device: device,
+            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+          });
+
+          if (!savedToken) {
+            throw new Error("Not possible to save in database.");
+          }
+
+          return { acessToken, rawToken };
+        }
+
         const message = await this.adminRegister(password, admin);
 
         return {
-          message
-        }
+          message,
+        };
       }
 
       const user = await ComparePass(password, client.passwordHash);
@@ -101,12 +134,12 @@ class authService {
       const device = headers;
       const adm = await AdminRepo.findById(id);
 
-      if(!adm){
-        throw new Error("Manager not found.")
+      if (!adm) {
+        throw new Error("Manager not found.");
       }
 
-      if(!device){
-        throw new Error("Missing device.")
+      if (!device) {
+        throw new Error("Missing device.");
       }
 
       const verify = verifyTOTP(adm.secret, code.toString());
@@ -342,7 +375,11 @@ class authService {
   async resetPassword(req) {
     try {
       const { password } = req.body;
+      const id = req.params.id;
 
+      if (id !== req.user.id) {
+        throw new Error("Invalid User");
+      }
       const passwordHash = await GeneralValidations.validatePassword(password);
 
       const user = await ClientRepo.update(req.user.id, {
@@ -431,7 +468,7 @@ class authService {
 
       const { name, email, age, password, code } = req.body;
       let passwordHash;
-      let codigo;
+      let decryptedSecret;
 
       // Pôr verificação de dispositivo para atividade suspeita.
       if (!device) {
@@ -441,7 +478,7 @@ class authService {
       // Utilizar o mesmo email que o convite foi utilizado.
       const newAdm = await InviteTokenRepo.findById(id);
 
-      if (!newAdm) {
+      if (!newAdm || email !== newAdm.email) {
         throw new Error("Invite admin error");
       }
 
@@ -457,8 +494,8 @@ class authService {
 
       passwordHash = await GeneralValidations.validatePassword(password);
 
-      codigo = code.toString();
-      verifyTOTP(newAdm.secret, codigo);
+      decryptedSecret = decrypt(newAdm.secret);
+      verifyTOTP(decryptedSecret, code.toString());
 
       const newManager = await AdminRepo.save({
         name,

@@ -13,6 +13,10 @@ class AdminRepo{
     return Admin.findOne({code: code})
   }
 
+  async deleteAdm(id){
+    return Admin.findOneAndDelete(id);
+  }
+
   async getAll(){
     return Admin.find();
   }

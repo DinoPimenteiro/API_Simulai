@@ -1,19 +1,23 @@
 import mongoose from "mongoose";
 
 const { Schema } = mongoose;
-const { ObjectId } = Schema;
 
 const CommentSchema = new Schema({
   title: String,
   body: String,
   rating: Number,
+  status: {
+    type: String,
+    enum: ["Aprovado", "Pendente", "Rejeitado"],
+    default: "Pendente",
+  },
   type: {
     type: String,
-    enum: ["Evaluation", "Help"] 
+    enum: ["Evaluation", "Help"],
   },
   createdAt: Date,
   UpdatedAt: Date,
-})
+});
 
 const ClientSchema = new Schema({
   name: String,
@@ -30,12 +34,13 @@ const ClientSchema = new Schema({
     type: String,
     default: null,
   },
-  comment: [CommentSchema]
+  comment: [CommentSchema],
 });
 
 const userLevel = ["Begginer", "Intermediate", "Advanced"];
-const commentType = ["Help", "Evaluation"]; 
+const commentType = ["Help", "Evaluation"];
+const commentStatus = ["Aprovado", "Pendente", "Rejeitado"];
 
 const Client = mongoose.model("client", ClientSchema);
 
-export {Client, userLevel, commentType};
+export { Client, userLevel, commentType, commentStatus };

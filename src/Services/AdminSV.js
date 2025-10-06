@@ -1,13 +1,16 @@
-import AdminRepo from "../Repositories/AdminRepo.js";
 import validator from "validator";
+import { authenticator } from "otplib";
+import AdminRepo from "../Repositories/AdminRepo.js";
 import ClientRepo from "../Repositories/ClientRepo.js";
 import { Capitalize } from "../utils/stringUtils.js";
 import GeneralValidations from "../utils/generalValidations.js";
+import { validStatus } from "../utils/userValidator.js";
 
 class adminService {
   async register(req) {
-    var { name, email, password, age } = req.body;
-    var passwordHash;
+    let { name, email, password, age } = req.body;
+    let passwordHash;
+    // let secret;
 
     age = parseInt(age, 10);
     name = validator.trim(Capitalize(name));
@@ -23,9 +26,7 @@ class adminService {
       passwordHash = await GeneralValidations.validatePassword(password);
 
       GeneralValidations.validateEmail(email);
-
       GeneralValidations.validateName(name);
-
       GeneralValidations.validateAge(age);
 
       const admin = await AdminRepo.save({
@@ -34,6 +35,7 @@ class adminService {
         age,
         passwordHash,
         role: "Boss",
+        // secret: será??? qrcode?????
       });
 
       return {
@@ -48,39 +50,15 @@ class adminService {
     }
   }
 
-  async getEvaluationComment() {
+  async getComment(type) {
     try {
-      const usersComments = await ClientRepo.findComment("Evaluation");
+      const usersComments = await ClientRepo.findComments(type);
 
       if (!usersComments) {
         throw new Error("Not possible to find users.");
       }
-      const allComments = usersComments.map((comment) => ({
-        id: comment.id,
-        email: comment.email,
-        comments: comment.comment,
-      }));
 
-      return allComments;
-    } catch (err) {
-      throw new Error(err.message);
-    }
-  }
-
-  async getHelpComment() {
-    try {
-      const usersComments = await ClientRepo.findComment("Help");
-
-      if (!usersComments) {
-        throw new Error("Not possible to find users.");
-      }
-      const allComments = usersComments.map((comment) => ({
-        id: comment.id,
-        email: comment.email,
-        comments: comment.comment,
-      }));
-
-      return allComments;
+      return usersComments;
     } catch (err) {
       throw new Error(err.message);
     }
@@ -106,13 +84,79 @@ class adminService {
       if (removedComment) {
         return {
           message: "Comentário removido.",
-          removedComment
+          removedComment,
         };
       } else {
-        throw new Error("erro ao comentário")
+        throw new Error("erro ao comentário");
       }
     } catch (err) {
       throw new Error(err.message);
+    }
+  }
+
+  async updateCommentStatus(parametersId, newStatus) {
+    try {
+      let { status } = newStatus;
+      const { userId, commentId } = parametersId;
+
+      if (!validStatus(status)) {
+        throw new Error("Invalid Status.");
+      }
+
+      const updatedComment = await ClientRepo.updateComment(
+        userId,
+        commentId,
+        status
+      );
+
+      if (updatedComment) {
+        return updatedComment;
+      } else {
+        throw new Error("Something goes wrong.");
+      }
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async getAllAdmins() {
+    try {
+      const admins = await AdminRepo.getAll();
+
+      if (admins) {
+        return {
+          id: admins._id,
+          name: admins.name,
+          email: admins.email,
+          role: admins.role,
+        };
+      } else {
+        throw new Error("Not possible to list admin.");
+      }
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async deleteAdmin(adminId) {
+    try {
+      const id = adminId;
+
+      const exist = await AdminRepo.findById(id);
+
+      if (!exist) {
+        throw new Error("user not found.");
+      }
+
+      const deleted = await AdminRepo.deleteAdm(id);
+
+      if (deleted) {
+        return deleted;
+      } else {
+        throw new Error("Failed to delete.");
+      }
+    } catch (err) {
+      throw err;
     }
   }
 }

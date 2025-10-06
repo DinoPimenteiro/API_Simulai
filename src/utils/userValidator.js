@@ -15,4 +15,7 @@ function validComment(type) {
   return false;
 }
 
-export { ValidLevel, validComment };
+function validStatus(status){
+  return typeof status === 'string' && commentType.includes(status);
+}
+export { ValidLevel, validComment, validStatus };

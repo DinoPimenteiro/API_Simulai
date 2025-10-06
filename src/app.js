@@ -1,6 +1,6 @@
 import e from 'express';
 import cookieParser from 'cookie-parser';
-import userRouter from './routes/userRoutes.js';
+import userRouter from './routes/clientRoutes.js';
 import mailRouter from './routes/mailRoutes.js';
 import authRouter from './routes/authRoutes.js';
 import adminRouter from './routes/adminRoutes.js';

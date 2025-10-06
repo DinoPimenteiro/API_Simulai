@@ -6,12 +6,12 @@ import { ComparePass } from "../utils/hashUtils.js";
 import { Capitalize } from "../utils/stringUtils.js";
 import { ValidLevel, validComment } from "../utils/userValidator.js";
 import GeneralValidations from "../utils/generalValidations.js";
-import { HandleProfileImage } from "../utils/fileUtils.js";
+import { HandleProfileImage } from "../utils/profileImage.js";
 
 class clientService {
   async register(req) {
-    var { name, email, password, age } = req.body;
-    var passwordHash;
+    let { name, email, password, age } = req.body;
+    let passwordHash;
 
     age = parseInt(age, 10);
     name = validator.trim(Capitalize(name));
@@ -34,7 +34,13 @@ class clientService {
 
       GeneralValidations.validateAge(age);
 
-      const client = await ClientRepo.save({ name, email, age, passwordHash, profileImage: profileImagePath });
+      const client = await ClientRepo.save({
+        profileImage: profileImagePath,
+        name,
+        email,
+        age,
+        passwordHash,
+      });
 
       const { acessToken } = await AuthSV.authenticate(
         {
@@ -46,10 +52,10 @@ class clientService {
 
       return {
         id: client._id,
+        profileImage: profileImagePath,
         name: client.name,
         email: client.email,
         age: client.age,
-        profileImage: profileImagePath,
         acessToken,
       };
     } catch (err) {
@@ -205,6 +211,7 @@ class clientService {
         body,
         rating,
         type,
+        createdAt: new Date().toLocaleDateString(),
       });
 
       if (userComment) {
@@ -217,10 +224,28 @@ class clientService {
           comments: saved.comment,
         };
       } else {
-        throw new Error("Not possible to save comment.")
+        throw new Error("Not possible to save comment.");
       }
     } catch (err) {
       throw new Error(err.message);
+    }
+  }
+
+  async deleteComment(userId, commentId){
+    try{
+      const clientId = userId;
+      const comment = commentId;
+
+      const deletedComment = await ClientRepo.deleteComment(clientId, comment);
+
+      if(deletedComment){
+        return deletedComment; 
+      } else {
+        throw new Error("Not possible to delete.")
+      }
+
+    } catch (err){
+      throw err;
     }
   }
 
