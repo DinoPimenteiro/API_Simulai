@@ -1,11 +1,12 @@
 import transporter from "../config/mailConfig.js";
 import InviteTokenRepo from "../Repositories/InviteTokenRepo.js";
 import { generateTotp } from "../config/2FAConfig.js";
+import generalValidations from "../utils/generalValidations.js";
 
 const ROUTE = "/admin/register/";
 
 class mailService {
-  async sendEmail(userMail) {
+  async recoverEmail(userMail) {
     const code = Math.floor(1000 + Math.random() * 9000);
 
     const body = {
@@ -41,9 +42,9 @@ class mailService {
     };
 
     const findInvite = await InviteTokenRepo.findByUser(email);
-    
-    if(findInvite){
-      throw new Error("Pending invite.")
+
+    if (findInvite) {
+      throw new Error("Pending invite.");
     }
 
     const savedInvite = await InviteTokenRepo.saveToken(adminInfo);
@@ -68,10 +69,37 @@ class mailService {
 
       return {
         sent,
-        invitationaLink
+        invitationaLink,
       };
     } catch (err) {
       throw new Error(err.message);
+    }
+  }
+  async contactEmail(name, email, subject, message) {
+    generalValidations.validateName(name);
+    generalValidations.validateEmail(email);
+
+    const body = {
+      from: email,
+      to: process.env.CLIENT_ID,
+      subject: subject,
+      html: message,
+      text: message,
+    };
+
+    try {
+      const sent = await transporter.sendMail(body);
+
+      if (sent.accepted) {
+        return {
+          sent,
+          name,
+        };
+      } else {
+        sent.response;
+      }
+    } catch (err) {
+      throw err;
     }
   }
 }

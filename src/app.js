@@ -8,6 +8,7 @@ const app = e();
 
 // Config
 app.use(e.json());
+app.use(e.urlencoded({extended: true}));
 app.use(cookieParser());
 
 // Rotas

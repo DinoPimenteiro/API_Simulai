@@ -10,6 +10,7 @@ import { HandleProfileImage } from "../utils/profileImage.js";
 
 class clientService {
   async register(req) {
+    const profileImagePath = await HandleProfileImage(req);
     let { name, email, password, age } = req.body;
     let passwordHash;
 
@@ -23,15 +24,11 @@ class clientService {
         throw new Error(`The user already exists.`);
       }
 
-      const profileImagePath = await HandleProfileImage(req);
 
       //Consultar docs
       passwordHash = await GeneralValidations.validatePassword(password);
-
       GeneralValidations.validateEmail(email);
-
       GeneralValidations.validateName(name);
-
       GeneralValidations.validateAge(age);
 
       const client = await ClientRepo.save({
@@ -51,8 +48,8 @@ class clientService {
       );
 
       return {
-        id: client._id,
         profileImage: profileImagePath,
+        id: client._id,
         name: client.name,
         email: client.email,
         age: client.age,

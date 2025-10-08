@@ -1,4 +1,5 @@
 import clientService from "../Services/ClientSV.js";
+import mailService from "../Services/MailSV.js";
 
 class clientController {
   async newClient(req, res) {
@@ -89,6 +90,21 @@ class clientController {
       }
     } catch (err) {
       res.status(500).json(err.message);
+    }
+  }
+  async contactMail(req, res) {
+    try {
+      const { completeName, subject, message, email } = req.body;
+      const { name, sent } = await mailService.contactEmail(
+        completeName,
+        email,
+        subject,
+        message
+      );
+
+      res.status(200).json({message: `Obrigado pelo seu feedback ${name}!`})
+    } catch (err) {
+      res.status(418).json(err.message);
     }
   }
 }

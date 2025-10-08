@@ -288,7 +288,7 @@ class authService {
         throw new Error("User was not found");
       }
 
-      const { sent, code } = await mailService.sendEmail(email);
+      const { sent, code } = await mailService.recoverEmail(email);
 
       const newRawToken = crypto.randomBytes(40).toString("hex");
       const newHashedToken = cryptoHash(newRawToken);
