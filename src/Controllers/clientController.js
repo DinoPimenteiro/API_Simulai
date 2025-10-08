@@ -13,6 +13,8 @@ class clientController {
       res.status(404).json(err.message);
     }
   }
+
+  // Rota para testes
   async getAll(req, res) {
     try {
       const users = await clientService.selectAll();
@@ -25,25 +27,32 @@ class clientController {
 
   async getOne(req, res) {
     try {
-      const user = await clientService.selectOne(req.params.id);
-      res.status(200).json(user);
+      if (req.user.id === req.params.id) {
+        const user = await clientService.selectOne(req.params.id);
+        res.status(200).json(user);
+      } else {
+        res.status(404).json({ error: "Bad request." });
+      }
     } catch (err) {
       res.status(404).json(err.message);
     }
   }
   async deleteUser(req, res) {
     try {
-      const userDeleted = await clientService.delete(req.params.id);
-      res.status(200).json(userDeleted);
+      if (req.user.id === req.params.id) {
+        const userDeleted = await clientService.delete(req.params.id);
+        res.status(200).json(userDeleted);
+      } else {
+        res.status(404).json({ error: "Bad request." });
+      }
     } catch (err) {
       res.status(404).json(err.message);
     }
   }
   async updateUser(req, res) {
     try {
-      const userUp = await clientService.edit(req.params.id, req.body);
-
-      if (userUp) {
+      if (req.user.id === req.params.id) {
+        const userUp = await clientService.edit(req.params.id, req.body);
         res.status(200).json(userUp);
       } else {
         res.status(404).json({ error: "not possible to edit." });
@@ -54,10 +63,14 @@ class clientController {
   }
   async comment(req, res) {
     try {
-      const comment = await clientService.comment(req.body, req.params.id);
+      if (req.user.id === req.params.id) {
+        const comment = await clientService.comment(req.body, req.params.id);
 
-      if (comment) {
-        res.status(200).json(comment);
+        if (comment) {
+          res.status(200).json(comment);
+        }
+      } else {
+        res.status(404).json({ error: "aaaaaa" });
       }
     } catch (err) {
       res.status(418).json(err.message);
@@ -65,9 +78,7 @@ class clientController {
   }
   async deleteComment(req, res) {
     try {
-      const user = await clientService.selectOne(req.params.userId);
-
-      if (user.email === req.user.email) {
+      if (req.params.userId === req.user.id) {
         const excludedComment = await clientService.deleteComment(
           req.params.userId,
           req.params.commentId

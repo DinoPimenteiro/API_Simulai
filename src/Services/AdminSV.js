@@ -1,5 +1,4 @@
 import validator from "validator";
-import { authenticator } from "otplib";
 import AdminRepo from "../Repositories/AdminRepo.js";
 import ClientRepo from "../Repositories/ClientRepo.js";
 import { Capitalize } from "../utils/stringUtils.js";
@@ -35,7 +34,6 @@ class adminService {
         age,
         passwordHash,
         role: "Boss",
-        // secret: será??? qrcode?????
       });
 
       return {
@@ -123,16 +121,20 @@ class adminService {
     try {
       const admins = await AdminRepo.getAll();
 
-      if (admins) {
-        return {
-          id: admins._id,
-          name: admins.name,
-          email: admins.email,
-          role: admins.role,
-        };
-      } else {
-        throw new Error("Not possible to list admin.");
-      }
+      if (!admins) throw new Error("Not possible to list admin.");
+
+      const adm = admins.map((admin) => {
+        let objct = {};
+
+        for (let i in admin) {
+          if (i === "passwordHash" || i === "secret") continue;
+          objct[i] = admin[i];
+        }
+
+        return objct;
+      });
+
+      return adm;
     } catch (err) {
       throw err;
     }

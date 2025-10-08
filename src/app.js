@@ -1,7 +1,6 @@
 import e from 'express';
 import cookieParser from 'cookie-parser';
 import userRouter from './routes/clientRoutes.js';
-import mailRouter from './routes/mailRoutes.js';
 import authRouter from './routes/authRoutes.js';
 import adminRouter from './routes/adminRoutes.js';
 
@@ -13,7 +12,6 @@ app.use(cookieParser());
 
 // Rotas
 app.use(userRouter)
-app.use(mailRouter)
 app.use(authRouter)
 app.use(adminRouter)
 

@@ -1,7 +1,9 @@
 import RefreshToken from "../Models/RefreshToken.js";
+import { cryptoHash } from "../utils/hashUtils.js";
 
 class RefreshTokenRepo {
-  async findByToken(token) {
+  async findByToken(raw) {
+    const token = cryptoHash(raw)
     return RefreshToken.where({ token: token }).findOne();
   }
 

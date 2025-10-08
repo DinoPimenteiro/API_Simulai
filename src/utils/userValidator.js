@@ -1,4 +1,4 @@
-import { userLevel, commentType } from "../Models/Client.js";
+import { userLevel, commentType, commentStatus } from "../Models/Client.js";
 
 function ValidLevel(level) {
   if (userLevel.includes(level)) {
@@ -16,6 +16,6 @@ function validComment(type) {
 }
 
 function validStatus(status){
-  return typeof status === 'string' && commentType.includes(status);
+  return typeof status === 'string' && commentStatus.includes(status);
 }
 export { ValidLevel, validComment, validStatus };

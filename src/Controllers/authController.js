@@ -29,6 +29,7 @@ class authController {
       res.status(400).json(err.message);
     }
   }
+  
   async loginAdmin(req, res) {
     try {
       const { acessToken, rawToken } = await authService.validateAdminCode(
@@ -61,7 +62,7 @@ class authController {
         await authService.refresh(req);
 
       res.cookie("refreshToken", newRawToken, {
-        maxAge: 7 * 24 * 60 * 60 * 1000,
+        maxAge: updatedToken.expiresAt
       });
 
       if (updatedToken) {

@@ -18,7 +18,7 @@ class AdminRepo{
   }
 
   async getAll(){
-    return Admin.find();
+    return Admin.find().lean();
   }
 
   async save(data){

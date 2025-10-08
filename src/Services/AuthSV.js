@@ -133,16 +133,15 @@ class authService {
       const { code } = data;
       const device = headers;
       const adm = await AdminRepo.findById(id);
+      let decryptedSecret;
 
-      if (!adm) {
-        throw new Error("Manager not found.");
-      }
+      if (!adm) throw new Error("Manager not found.");
+      
 
-      if (!device) {
-        throw new Error("Missing device.");
-      }
+      if (!device) throw new Error("Missing device.");
 
-      const verify = verifyTOTP(adm.secret, code.toString());
+      decryptedSecret = decrypt(adm.secret);
+      const verify = verifyTOTP(decryptedSecret, code.toString());
 
       if (verify) {
         const payload = {
@@ -169,9 +168,8 @@ class authService {
           expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         });
 
-        if (!savedToken) {
-          throw new Error("Not possible to save in database.");
-        }
+        if (!savedToken) throw new Error("Not possible to save in database.");
+        
 
         // Mudar depois, manter só para testes
         return {
@@ -193,19 +191,12 @@ class authService {
         throw new Error("Token not found.");
       }
 
-      //Verificar antes de buscar no banco para não sobrecarregar.
-      const hashedToken = cryptoHash(rawToken);
-
-      const refreshToken = await RefreshTokenRepo.findByToken(hashedToken);
+      const refreshToken = await RefreshTokenRepo.findByToken(rawToken);
 
       // Dá pra pôr validação por tempo também. Seria bom.
-      if (!refreshToken) {
-        throw new Error("Invalid token.");
-      }
+      if (!refreshToken) throw new Error("Invalid token.");
 
-      if (!device) {
-        throw new Error("Missing device.");
-      }
+      if (!device) throw new Error("Missing device.");
 
       if (refreshToken.type !== "acess") {
         throw new Error("The type of token need to be 'acess'");
@@ -232,7 +223,7 @@ class authService {
           userId: refreshToken.userId,
           userEmail: refreshToken.userEmail,
           device,
-          expiresIn: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+          expiresAt: refreshToken.expiresAt,
         }
       );
 
@@ -254,12 +245,9 @@ class authService {
     try {
       const token = getToken(req);
 
-      if (!token) {
-        throw new Error("Token not found.");
-      }
+      if (!token) throw new Error("Token not found.");
 
-      const hashed = cryptoHash(token);
-      const refreshToken = await RefreshTokenRepo.findByToken(hashed);
+      const refreshToken = await RefreshTokenRepo.findByToken(token);
 
       if (!refreshToken) {
         throw new Error("Invalid token.");
