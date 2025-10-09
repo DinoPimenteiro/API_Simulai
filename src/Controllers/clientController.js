@@ -53,7 +53,7 @@ class clientController {
   async updateUser(req, res) {
     try {
       if (req.user.id === req.params.id) {
-        const userUp = await clientService.edit(req.params.id, req.body);
+        const userUp = await clientService.edit(req.params.id, req);
         res.status(200).json(userUp);
       } else {
         res.status(404).json({ error: "not possible to edit." });

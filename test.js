@@ -1,3 +1,5 @@
-let b = new Date()
+import crypto from 'crypto'
 
-console.log(b)
+let a = crypto.randomBytes(42);
+
+console.log(a.toString('base64'))

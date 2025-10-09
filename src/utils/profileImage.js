@@ -23,22 +23,24 @@ export async function HandleProfileImage(req) {
       storage,
       limits: { fileSize: 2 * 1024 * 1024 }, 
       fileFilter: (req, file, cb) => {
-       
+        // Se não for imagem, rejeita o arquivo e ignora (sem erro, só não aceita)
         if (!file.mimetype.startsWith("image/")) {
-          return cb(new Error("Somente imagens são permitidas"));
+          return cb(null, false);
         }
         cb(null, true);
       },
     }).single("profileImage"); 
   
-    upload (req, null, (err) => {
+    upload(req, null, (err) => {
       if (err) {
         if (err.code === "LIMIT_FILE_SIZE") return reject(new Error("Arquivo muito grande"));
         return reject(err);
       }
-  
+
+      // Se não houve arquivo enviado, resolve null
       if (!req.file) return resolve(null);
 
+      // Caso contrário, retorna o caminho do arquivo salvo
       resolve(req.file.path);
     });
   });

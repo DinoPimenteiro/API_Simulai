@@ -7,6 +7,7 @@ import { Capitalize } from "../utils/stringUtils.js";
 import { ValidLevel, validComment } from "../utils/userValidator.js";
 import GeneralValidations from "../utils/generalValidations.js";
 import { HandleProfileImage } from "../utils/profileImage.js";
+import generalValidations from "../utils/generalValidations.js";
 
 class clientService {
   async register(req) {
@@ -118,9 +119,16 @@ class clientService {
     }
   }
 
-  async edit(id, data) {
+  async edit(id, req) {
+    let profileImagePath = await HandleProfileImage(req);
     try {
-      var { name, email, age, password, level, job } = data;
+
+    if (!profileImagePath) {
+      const existingUser = await ClientRepo.findID(id);
+      profileImagePath = existingUser.profileImage;
+    }
+
+      var { name, email, age, password, level, job } = req.body;
 
       const user = await ClientRepo.findEmail(email);
 
@@ -156,21 +164,25 @@ class clientService {
       const passwordHash = await GeneralValidations.validatePassword(password);
 
       const edited = await ClientRepo.update(id, {
+        profileImage: profileImagePath,
         name,
         age,
         passwordHash,
         job,
         level,
       });
-
+      
       return {
+        profileImagePath: edited.profileImage,
         id: edited._id,
         name: edited.name,
         age: edited.age,
         job: edited.job,
         level: edited.level,
       };
+
     } catch (err) {
+      generalValidations.imageDelete(profileImagePath)
       throw new Error(err.message);
     }
   }

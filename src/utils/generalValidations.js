@@ -1,5 +1,6 @@
 import validator from "validator";
 import { PassHash } from "./hashUtils.js";
+import fs from "fs"
 
 class GeneralValidations {
   async validatePassword(password) {
@@ -39,6 +40,13 @@ class GeneralValidations {
     }
     return true;
   }
+
+  imageDelete(profileImagePath) {
+    if (profileImagePath) {
+  fs.unlinkSync(profileImagePath)
+}}
+
 }
+  
 
 export default new GeneralValidations();
