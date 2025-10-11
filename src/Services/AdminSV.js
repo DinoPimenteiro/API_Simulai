@@ -20,6 +20,12 @@ class adminService {
       if (exists) {
         throw new Error(`The user already exists.`);
       }
+      
+     const existsUser = await ClientRepo.findEmail(email);
+
+      if (existsUser) {
+        throw new Error(`The user already exists.`);
+      }
 
       //Consultar docs
       passwordHash = await GeneralValidations.validatePassword(password);

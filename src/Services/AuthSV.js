@@ -13,7 +13,7 @@ import GeneralValidations from "../utils/generalValidations.js";
 
 class authService {
   //Login
-  async authenticate(userdata, headers) {
+  async login(userdata, headers) {
     try {
       const { password, email } = userdata;
       const device = headers;
@@ -403,7 +403,7 @@ class authService {
 
       const hashedToken = cryptoHash(rawToken);
 
-      const token = await RefreshTokenRepo.findByToken(hashedToken);
+      const token = await RefreshTokenRepo.findByToken(rawToken);
 
       if (!token) {
         throw new Error("Token was not found in database.");

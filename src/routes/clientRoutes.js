@@ -19,4 +19,4 @@ router.post("/recover-mail", authController.recoverMail);
 router.post("/recover-mail/valid", authController.validCodeMail);
 router.put("/reset-password", authUser, authController.resetPass);
 
-export default router;
+export default router;   

@@ -8,10 +8,10 @@ class clientController {
       if (newUser) {
         res.status(200).json(newUser);
       } else {
-        res.status(404).json({ Error: newUser });
+        res.status(404).json({ message: "ta dando xabu" });
       }
     } catch (err) {
-      res.status(404).json(err.message);
+      res.status(404).json(err.message);  //xabu do lembretes
     }
   }
 

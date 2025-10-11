@@ -15,7 +15,7 @@ export async function HandleProfileImage(req) {
 
       filename: (req, file, cb) => {
         const ext = path.extname(file.originalname);
-        cb(null, `profile_${Date.now()}${ext}`);
+        cb(null, `profile_${Date.now()}${ext}`); //dá, msa não sei como, porque aqui é um middleware, dentro da callback de uma função
       },
     });
 

@@ -3,7 +3,7 @@ import authService from "../Services/AuthSV.js";
 class authController {
   async login(req, res) {
     try {
-      const { acessToken, rawToken, message } = await authService.authenticate(
+      const { acessToken, rawToken, message } = await authService.login(
         req.body,
         req.headers["user-agent"]
       );
@@ -26,7 +26,7 @@ class authController {
         res.status(400).json({ Error: "deu ruim ó doido" });
       }
     } catch (err) {
-      res.status(400).json(err.message);
+      res.status(400).json({message: err.message});
     }
   }
   
@@ -55,7 +55,6 @@ class authController {
       res.status(500).json({error: err.message});
     }
   }
-
   async refresh(req, res) {
     try {
       const { newRawToken, updatedToken, newAcessToken } =

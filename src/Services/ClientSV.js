@@ -8,6 +8,7 @@ import { ValidLevel, validComment } from "../utils/userValidator.js";
 import GeneralValidations from "../utils/generalValidations.js";
 import { HandleProfileImage } from "../utils/profileImage.js";
 import generalValidations from "../utils/generalValidations.js";
+import fs from "fs";
 
 class clientService {
   async register(req) {
@@ -24,7 +25,6 @@ class clientService {
       if (exists) {
         throw new Error(`The user already exists.`);
       }
-
 
       //Consultar docs
       passwordHash = await GeneralValidations.validatePassword(password);
@@ -107,13 +107,23 @@ class clientService {
 
       GeneralValidations.validateUser(user);
 
+      if (user.profileImage !== null) {
+        fs.unlinkSync(user.profileImage);
+      }
+
       const userSessions = await RefreshTokenRepo.destroyManyTokens(id);
       const deleted = await ClientRepo.destroy(id);
 
-      return {
-        userDeleted: deleted,
-        DeletedSessions: userSessions,
-      };
+      if (userSessions && deleted) {
+        return {
+          userDeleted: deleted,
+          DeletedSessions: userSessions,
+        };
+      } else {
+        throw new Error("was not possible to delete user/sessions")
+      }
+
+
     } catch (err) {
       throw new Error(err.message);
     }
@@ -123,22 +133,23 @@ class clientService {
     let profileImagePath = await HandleProfileImage(req);
     try {
 
-    if (!profileImagePath) {
-      const existingUser = await ClientRepo.findID(id);
-      profileImagePath = existingUser.profileImage;
-    }
+      if (!profileImagePath) {
+        const existingUser = await ClientRepo.findID(id);
+        profileImagePath = existingUser.profileImage;
+      }
 
-      var { name, email, age, password, level, job } = req.body;
+      if (profileImagePath !== null) {
+        const existingUser = await ClientRepo.findID(id);
+        const path = existingUser.profileImage;
+        fs.unlinkSync(path);
+      }
+
+
+      var { name, email, age, level, job } = req.body;
 
       const user = await ClientRepo.findEmail(email);
 
       GeneralValidations.validateUser(user);
-
-      var pass = ComparePass(password, user.passwordHash);
-
-      if (!pass) {
-        throw new Error("Invalid password.");
-      }
 
       var job = validator.trim(job);
       var level = validator.trim(level);
@@ -161,17 +172,15 @@ class clientService {
 
       GeneralValidations.validateAge(age);
 
-      const passwordHash = await GeneralValidations.validatePassword(password);
-
       const edited = await ClientRepo.update(id, {
         profileImage: profileImagePath,
         name,
         age,
-        passwordHash,
         job,
         level,
       });
-      
+
+
       return {
         profileImagePath: edited.profileImage,
         id: edited._id,
@@ -183,7 +192,7 @@ class clientService {
 
     } catch (err) {
       generalValidations.imageDelete(profileImagePath)
-      throw new Error(err.message);
+      throw err;
     }
   }
 
@@ -240,26 +249,26 @@ class clientService {
     }
   }
 
-  async deleteComment(userId, commentId){
-    try{
+  async deleteComment(userId, commentId) {
+    try {
       const clientId = userId;
       const comment = commentId;
 
       const deletedComment = await ClientRepo.deleteComment(clientId, comment);
 
-      if(deletedComment){
-        return deletedComment; 
+      if (deletedComment) {
+        return deletedComment;
       } else {
         throw new Error("Not possible to delete.")
       }
 
-    } catch (err){
+    } catch (err) {
       throw err;
     }
   }
 
   // Pesquisa para agregar/completar o cadastro do usuário;
-  async research(data) {}
+  async research(data) { }
 }
 
 export default new clientService();

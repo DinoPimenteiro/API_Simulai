@@ -14,3 +14,8 @@
 
 
 -Nicolas lembrete, arrumar erro de baixar varias imagens ao editar
+
+
+-se der xabu(controller) cadastra do mesmo jeito
+
+-editar da pra trocar a senha
