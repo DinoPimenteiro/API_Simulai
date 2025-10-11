@@ -46,6 +46,11 @@ class GeneralValidations {
   fs.unlinkSync(profileImagePath)
 }}
 
+  resumeDelete(resumePath) {
+    if (resumePath) {
+  fs.unlinkSync(resumePath)
+}}
+
 }
   
 

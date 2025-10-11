@@ -7,13 +7,12 @@
   - Listagem das métricas dos usuários, idade, nível e avaliações (as queries já estão prontas, com exceção do "level" dos clientes, só falta fazer os services, controllers e nomear as rotas.);
 
 - Implementar as seguintes funcionalidades para **Clientes**
-  - Implementar um middleware para processar imagens na rota de edição de perfil;
+  - Implementar um middleware para processar imagens na rota de edição de perfil; -feito
   - Possibilidade de envio do currículo para o sistema;
-  - Verificar como excluir um arquivo do sistema depois da exclusão de um perfil;
+  - Verificar como excluir um arquivo do sistema depois da exclusão de um perfil; -feito
   - Sistema de pesquisa com alternativas para traçar o nível do usuário;
 
 
--Nicolas lembrete, arrumar erro de baixar varias imagens ao editar
 
 
 -se der xabu(controller) cadastra do mesmo jeito

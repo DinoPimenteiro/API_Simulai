@@ -9,10 +9,13 @@ import GeneralValidations from "../utils/generalValidations.js";
 import { HandleProfileImage } from "../utils/profileImage.js";
 import generalValidations from "../utils/generalValidations.js";
 import fs from "fs";
+import { Resume } from "../utils/resumeUtils.js";
 
 class clientService {
   async register(req) {
     const profileImagePath = await HandleProfileImage(req);
+    const resumePath = await Resume(req);
+
     let { name, email, password, age } = req.body;
     let passwordHash;
 
@@ -33,6 +36,7 @@ class clientService {
       GeneralValidations.validateAge(age);
 
       const client = await ClientRepo.save({
+        resume: resumePath,
         profileImage: profileImagePath,
         name,
         email,
@@ -49,6 +53,7 @@ class clientService {
       );
 
       return {
+        resume: resumePath,
         profileImage: profileImagePath,
         id: client._id,
         name: client.name,
@@ -111,6 +116,10 @@ class clientService {
         fs.unlinkSync(user.profileImage);
       }
 
+      if (user.resume !== null) {
+        fs.unlinkSync(user.resume);
+      }
+
       const userSessions = await RefreshTokenRepo.destroyManyTokens(id);
       const deleted = await ClientRepo.destroy(id);
 
@@ -131,6 +140,7 @@ class clientService {
 
   async edit(id, req) {
     let profileImagePath = await HandleProfileImage(req);
+    let resume = await Resume(req);
     try {
 
       if (!profileImagePath) {
@@ -141,6 +151,17 @@ class clientService {
       if (profileImagePath !== null) {
         const existingUser = await ClientRepo.findID(id);
         const path = existingUser.profileImage;
+        fs.unlinkSync(path);
+      }
+
+      if (!resume) {
+        const existingUser = await ClientRepo.findID(id);
+        resume = existingUser.resume;
+      }
+
+      if (resume !== null) {
+        const existingUser = await ClientRepo.findID(id);
+        const path = existingUser.resume;
         fs.unlinkSync(path);
       }
 
@@ -173,6 +194,7 @@ class clientService {
       GeneralValidations.validateAge(age);
 
       const edited = await ClientRepo.update(id, {
+        resume: resumePath,
         profileImage: profileImagePath,
         name,
         age,
@@ -182,6 +204,7 @@ class clientService {
 
 
       return {
+        resumePath: edited.resume,
         profileImagePath: edited.profileImage,
         id: edited._id,
         name: edited.name,
@@ -191,7 +214,8 @@ class clientService {
       };
 
     } catch (err) {
-      generalValidations.imageDelete(profileImagePath)
+      generalValidations.imageDelete(profileImagePath);
+      generalValidations.resumeDelete(resumePath);
       throw err;
     }
   }
