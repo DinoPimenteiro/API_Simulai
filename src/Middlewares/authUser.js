@@ -12,10 +12,9 @@ export default async function authUser(req, res, next) {
       req.user = data;
       next();
     } catch (err) {
-      res.status(418).json(err.message)
+      sendError(res, err.message, 401, errors.auth);
     }
-    
   } else {
-    res.status(401).json({error: "undefined token."})
+    sendError(res, "undefined token", 400, errors.auth);
   }
 }

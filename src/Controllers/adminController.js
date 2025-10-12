@@ -1,34 +1,46 @@
 import adminService from "../Services/AdminSV.js";
+import { sendError, errors } from "../utils/sendError.js";
 
 class adminController {
   async register(req, res) {
     try {
-      const newAdmin = await adminService.register(req);
+      const newAdmin = await adminService.register(req.body);
       if (newAdmin) {
-        res.status(200).json(newAdmin);
-      } else {
-        res.status(404).json({ error: "Was not possible to register." });
+        return res.status(200).json({
+          success: true,
+          data: newAdmin,
+        });
       }
+      return sendError(
+        res,
+        "failed to register new admin",
+        500,
+        errors.internal
+      );
     } catch (err) {
-      res.status(500).json(err.message);
+      return sendError(res, err.message, 500, errors.unexpected);
     }
   }
 
   async getAllAdmin(req, res) {
     try {
       if (req.admin.role !== "Boss") {
-        res.status(400).json({ message: "Unauthorized." });
+        return sendError(res, "invalid role", 403, errors.unauthorized);
       }
 
       const admins = await adminService.getAllAdmins();
 
       if (admins) {
-        res.status(200).json(admins);
-      } else {
-        res.status(400).json({error: "Something it's not right"});
+        return res.status(200).json({ success: true, data: admins });
       }
+      return sendError(
+        res,
+        "was not possible to list admins",
+        500,
+        errors.internal
+      );
     } catch (err) {
-      res.status(500).json(err.message);
+      return sendError(res, err.message, 500, errors.unexpected);
     }
   }
 
@@ -37,12 +49,11 @@ class adminController {
       const comments = await adminService.getComment(["Help", "Evaluation"]);
 
       if (comments) {
-        res.status(200).json(comments);
-      } else {
-        res.status(404).json({ error: "not possible to list comments." });
+        return res.status(200).json({ success: true, data: comments });
       }
+      return sendError(res, "failed to list comments", 500, errors.internal);
     } catch (err) {
-      res.status(500).json(err.message);
+      return sendError(res, err.message, 500, errors.unexpected);
     }
   }
 
@@ -51,12 +62,16 @@ class adminController {
       const comments = await adminService.getComment("Help");
 
       if (comments) {
-        res.status(200).json(comments);
-      } else {
-        res.status(404).json({ error: "not possible to list comments." });
+        return res.status(200).json({ success: true, data: comments });
       }
+      return sendError(
+        res,
+        "failed to list help comments",
+        500,
+        errors.internal
+      );
     } catch (err) {
-      res.status(500).json(err.message);
+      return sendError(res, err.message, 500, errors.unexpected);
     }
   }
 
@@ -65,12 +80,11 @@ class adminController {
       const comments = await adminService.getComment("Evaluation");
 
       if (comments) {
-        res.status(200).json(comments);
-      } else {
-        res.status(404).json({ error: "not possible to list comments." });
+        return res.status(200).json({ success: true, data: comments });
       }
+      return sendError(res, "not possible to list comments", 404, errors.data);
     } catch (err) {
-      res.status(500).json(err.message);
+      return sendError(res, err.message, 500, errors.internal);
     }
   }
 
@@ -82,12 +96,11 @@ class adminController {
       );
 
       if (deleted) {
-        res.status(200).json(deleted);
-      } else {
-        res.status(404).json({ error: "erro controller" });
+        return res.status(200).json({ success: true, data: deleted });
       }
+      return sendError(res, "comment not found", 404, errors.data);
     } catch (err) {
-      res.status(500).json(err.message);
+      return sendError(res, err.message, 500, errors.internal);
     }
   }
 
@@ -99,30 +112,33 @@ class adminController {
       );
 
       if (comment) {
-        res.status(200).json(comment);
-      } else {
-        res.status(418).json({ error: "Algo deu Errado!" });
+        return res.status(200).json({ success: true, data: comment });
       }
+      return sendError(
+        res,
+        "failed to update comment status",
+        400,
+        errors.data
+      );
     } catch (err) {
-      res.status(500).json(err.message);
+      return sendError(res, err.message, 500, errors.internal);
     }
   }
 
   async deleteAdmin(req, res) {
     try {
       if (req.admin.role !== "Boss") {
-        res.status(400).json({ message: "Unauthorized." });
+        return sendError(res, "unauthorized role", 403, errors.unauthorized);
       }
 
       const deleted = await adminService.deleteAdmin(req.params.id);
 
       if (deleted) {
-        res.status(200).json(deleted);
-      } else {
-        res.status(404).json({ error: "Not possible to delete." });
+        return res.status(200).json({ success: true, data: deleted });
       }
+      return sendError(res, "not possible to delete admin", 404, errors.data);
     } catch (err) {
-      res.status(500).json(err.message);
+      return sendError(res, err.message, 500, errors.internal);
     }
   }
 }

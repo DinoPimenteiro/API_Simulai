@@ -1,18 +1,17 @@
 import validator from "validator";
 import ClientRepo from "../Repositories/ClientRepo.js";
 import RefreshTokenRepo from "../Repositories/RfshTokenRepo.js";
-import AuthSV from "./AuthSV.js";
-import { ComparePass } from "../utils/hashUtils.js";
+import ClientAuthService from "./Auth/ClientAuthService.js";
 import { Capitalize } from "../utils/stringUtils.js";
 import { ValidLevel, validComment } from "../utils/userValidator.js";
 import GeneralValidations from "../utils/generalValidations.js";
-import { HandleProfileImage } from "../utils/profileImage.js";
-import generalValidations from "../utils/generalValidations.js";
 
 class clientService {
-  async register(req) {
-    const profileImagePath = await HandleProfileImage(req);
-    let { name, email, password, age } = req.body;
+  async register(data, profileFile, curriculumFile, headers) {
+    const profileImagePath = profileFile;
+    const curriculumPath = curriculumFile;
+
+    let { name, email, password, age } = data;
     let passwordHash;
 
     age = parseInt(age, 10);
@@ -21,10 +20,7 @@ class clientService {
     try {
       const exists = await ClientRepo.findEmail(email);
 
-      if (exists) {
-        throw new Error(`The user already exists.`);
-      }
-
+      if (exists) throw new Error(`The user already exists.`);
 
       //Consultar docs
       passwordHash = await GeneralValidations.validatePassword(password);
@@ -34,30 +30,38 @@ class clientService {
 
       const client = await ClientRepo.save({
         profileImage: profileImagePath,
+        resume: curriculumPath,
         name,
         email,
         age,
         passwordHash,
       });
 
-      const { acessToken } = await AuthSV.authenticate(
-        {
-          password: password,
-          email: email,
-        },
-        req.headers["user-agent"]
+      await client.save();
+
+      const acessCredentials = await ClientAuthService.clientLogin(
+        client._id.toString(),
+        headers
       );
 
       return {
         profileImage: profileImagePath,
+        resume: curriculumPath,
         id: client._id,
         name: client.name,
         email: client.email,
         age: client.age,
-        acessToken,
+        acessCredentials,
       };
     } catch (err) {
-      throw new Error(err.message);
+      if (profileImagePath && fs.existsSync(profileImagePath)) {
+        await fs.promises.unlink(profileImagePath);
+      }
+
+      if (curriculumPath && fs.existsSync(curriculumPath)) {
+        await fs.promises.unlink(curriculumPath);
+      }
+      throw err;
     }
   }
 
@@ -77,7 +81,7 @@ class clientService {
 
       return treatedUsers;
     } catch (err) {
-      throw new Error(err.message);
+      throw err;
     }
   }
 
@@ -97,48 +101,50 @@ class clientService {
         comments: user.comment,
       };
     } catch (err) {
-      throw new Error(err.message);
+      throw err;
     }
   }
 
   async delete(id) {
-    try {
-      let user = await ClientRepo.findID(id);
+    let user = await ClientRepo.findID(id);
+    GeneralValidations.validateUser(user);
 
-      GeneralValidations.validateUser(user);
+    try {
+      if (fs.existsSync(user.profileImage)) {
+        await fs.promises.unlink(user.profileImage);
+      }
 
       const userSessions = await RefreshTokenRepo.destroyManyTokens(id);
       const deleted = await ClientRepo.destroy(id);
 
-      return {
-        userDeleted: deleted,
-        DeletedSessions: userSessions,
-      };
+      if (deleted) {
+        return {
+          userDeleted: deleted,
+          DeletedSessions: userSessions,
+        };
+      }
     } catch (err) {
-      throw new Error(err.message);
+      throw err;
     }
   }
 
-  async edit(id, req) {
-    let profileImagePath = await HandleProfileImage(req);
+  async edit(id, data, profileFile, curriculumFile) {
+    let profileImagePath = profileFile;
+    let curriculumPath = curriculumFile;
+    const client = await ClientRepo.findID(id);
+
+    GeneralValidations.validateUser(client);
+
     try {
-
-    if (!profileImagePath) {
-      const existingUser = await ClientRepo.findID(id);
-      profileImagePath = existingUser.profileImage;
-    }
-
-      var { name, email, age, password, level, job } = req.body;
-
-      const user = await ClientRepo.findEmail(email);
-
-      GeneralValidations.validateUser(user);
-
-      var pass = ComparePass(password, user.passwordHash);
-
-      if (!pass) {
-        throw new Error("Invalid password.");
+      if (!profileImagePath) {
+        profileImagePath = client.profileImage;
       }
+
+      if (!curriculumPath) {
+        curriculumPath = client.resume;
+      }
+
+      var { name, age, level, job } = data;
 
       var job = validator.trim(job);
       var level = validator.trim(level);
@@ -146,44 +152,39 @@ class clientService {
       var age = parseInt(age, 10);
 
       GeneralValidations.validateName(name);
-
-      if (job === "" || !job) {
-        throw new Error("Invalid job.");
-      }
-
-      if (level === "" || !level) {
-        throw new Error("Invalid level.");
-      }
-
-      if (!ValidLevel(level)) {
-        throw new Error("Invalid level.");
-      }
-
+      GeneralValidations.validateName(job, "Invalid job");
       GeneralValidations.validateAge(age);
 
-      const passwordHash = await GeneralValidations.validatePassword(password);
+      if (!ValidLevel(level)) throw new Error("Invalid level.");
 
       const edited = await ClientRepo.update(id, {
         profileImage: profileImagePath,
+        resume: curriculumPath,
         name,
         age,
-        passwordHash,
         job,
         level,
       });
-      
+
+      await edited.save();
+
       return {
         profileImagePath: edited.profileImage,
+        resume: edited.resume,
         id: edited._id,
         name: edited.name,
         age: edited.age,
         job: edited.job,
         level: edited.level,
       };
-
     } catch (err) {
-      generalValidations.imageDelete(profileImagePath)
-      throw new Error(err.message);
+      if (profileFile && fs.existsSync(profileFile)) {
+        await fs.promises.unlink(profileFile);
+      }
+      if (curriculumFile && fs.existsSync(curriculumFile)) {
+        await fs.promises.unlink(curriculumFile);
+      }
+      throw err;
     }
   }
 
@@ -193,23 +194,18 @@ class clientService {
       let { type, body, rating, title } = data;
       let id = user;
 
+      if (!id) throw new Error("Invalid id");
+
       const client = await ClientRepo.findID(id);
 
-      if (!client) {
-        throw new Error("User not found.");
-      }
+      GeneralValidations.validateUser(client);
 
       if (parseInt(rating, 10) > 5) {
         throw new Error("Exceeded rating.");
       }
 
-      if (!validator.trim(body)) {
-        throw new Error("Invalid comment.");
-      }
-
-      if (!validator.trim(title)) {
-        throw new Error("Invalid title.");
-      }
+      GeneralValidations.validateName(body, "Invalid comment");
+      GeneralValidations.validateName(title, "Invalid title");
 
       if (!validComment(type)) {
         throw new Error("Invalid comment type.");
@@ -236,30 +232,54 @@ class clientService {
         throw new Error("Not possible to save comment.");
       }
     } catch (err) {
-      throw new Error(err.message);
-    }
-  }
-
-  async deleteComment(userId, commentId){
-    try{
-      const clientId = userId;
-      const comment = commentId;
-
-      const deletedComment = await ClientRepo.deleteComment(clientId, comment);
-
-      if(deletedComment){
-        return deletedComment; 
-      } else {
-        throw new Error("Not possible to delete.")
-      }
-
-    } catch (err){
       throw err;
     }
   }
 
-  // Pesquisa para agregar/completar o cadastro do usuário;
-  async research(data) {}
+  async deleteComment(userId, commentId) {
+    try {
+      const clientId = userId;
+      const comment = commentId;
+
+      if (!clientId || !comment) {
+        throw new Error("Invalid parameters");
+      }
+
+      const deletedComment = await ClientRepo.deleteComment(clientId, comment);
+
+      if (deletedComment) {
+        return deletedComment;
+      } else {
+        throw new Error("Not possible to delete.");
+      }
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async clientsStatistics() {
+    try {
+      const avgRate = await ClientRepo.averageRating();
+      const avgAge = await ClientRepo.averageAge();
+      const juvenil = await ClientRepo.ageFilter(14, 18);
+      const adults = await ClientRepo.ageFilter(18, 24);
+      const seniors = await ClientRepo.ageFilter(24, 30);
+
+      return {
+        media: {
+          rate: avgRate,
+          age: avgAge,
+        },
+        age_distribution: {
+          juvenil: juvenil,
+          adults: adults,
+          seniors: seniors,
+        },
+      };
+    } catch (err) {
+      throw err;
+    }
+  }
 }
 
 export default new clientService();

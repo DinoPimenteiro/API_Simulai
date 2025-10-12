@@ -24,7 +24,14 @@ const ClientSchema = new Schema({
   email: String,
   passwordHash: String,
   age: Number,
-  profileImage: String,
+  profileImage: {
+    type: String,
+    default: null,
+  },
+  resume: {
+    type: String,
+    default: null,
+  },
   level: {
     type: String,
     enum: ["Begginer", "Intermediate", "Advanced"],

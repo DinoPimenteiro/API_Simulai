@@ -14,4 +14,4 @@ router.post("/admin/register/:id", authController.registerAdmin);
 router.get("/admin/register/:id", authController.validateInvite);
 router.post('/admin/login/:id', authController.loginAdmin);
 
-export default router; 
+export default router;

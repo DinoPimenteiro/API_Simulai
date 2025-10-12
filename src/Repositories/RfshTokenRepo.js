@@ -11,6 +11,10 @@ class RefreshTokenRepo {
     return RefreshToken.where({ userId: id }).findOne();
   }
 
+  async findByUserEmail(email){
+    return RefreshToken.find({userEmail: email});
+  }
+
   async destroyToken(id) {
     return RefreshToken.findByIdAndDelete(id);
   }

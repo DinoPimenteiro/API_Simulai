@@ -1,6 +1,6 @@
 import { authenticator } from "otplib";
 import qrcode from "qrcode";
-import { encrypt } from "../utils/encryptUtils.js";
+import { encrypt, decrypt } from "../utils/encryptUtils.js";
 
 export async function generateTotp(email, appName = "SimulAI") {
   let secret = authenticator.generateSecret();
@@ -17,7 +17,10 @@ export async function generateTotp(email, appName = "SimulAI") {
   };
 }
 
-export function verifyTOTP(secret, token) {
+export function verifyTOTP(adminSecret, adminToken) {
+  let secret = decrypt(adminSecret);
+  let token = adminToken.toString();
+
   const valid = authenticator.verify({ secret, token, window: 2 });
   if (!valid) throw new Error("Código TOTP inválido.");
 

@@ -6,8 +6,8 @@ import GeneralValidations from "../utils/generalValidations.js";
 import { validStatus } from "../utils/userValidator.js";
 
 class adminService {
-  async register(req) {
-    let { name, email, password, age } = req.body;
+  async register(data) {
+    let { name, email, password, age } = data;
     let passwordHash;
     // let secret;
 
@@ -21,7 +21,6 @@ class adminService {
         throw new Error(`The user already exists.`);
       }
 
-      //Consultar docs
       passwordHash = await GeneralValidations.validatePassword(password);
 
       GeneralValidations.validateEmail(email);
@@ -36,15 +35,19 @@ class adminService {
         role: "Boss",
       });
 
-      return {
-        id: admin._id,
-        name: admin.name,
-        email: admin.email,
-        age: admin.age,
-        role: admin.role,
-      };
+      if (admin) {
+        return {
+          id: admin._id,
+          name: admin.name,
+          email: admin.email,
+          age: admin.age,
+          role: admin.role,
+        };
+      } else {
+        throw new Error("failed to register admin");
+      }
     } catch (err) {
-      throw new Error(`server error: ${err.message}`);
+      throw err;
     }
   }
 
@@ -58,14 +61,14 @@ class adminService {
 
       return usersComments;
     } catch (err) {
-      throw new Error(err.message);
+      throw err;
     }
   }
 
   async deleteComment(commentId, userId) {
     try {
-      const userID = userId;
       const commentID = commentId;
+      const userID = userId;
 
       if (!userID || !commentID) {
         throw new Error("Missing parameters.");
@@ -85,10 +88,10 @@ class adminService {
           removedComment,
         };
       } else {
-        throw new Error("erro ao comentário");
+        throw new Error("erro ao deletar comentário");
       }
     } catch (err) {
-      throw new Error(err.message);
+      throw err;
     }
   }
 
@@ -99,6 +102,10 @@ class adminService {
 
       if (!validStatus(status)) {
         throw new Error("Invalid Status.");
+      }
+
+      if(!userId || !commentId){
+        throw new Error("Missing parameters")
       }
 
       const updatedComment = await ClientRepo.updateComment(
@@ -144,10 +151,12 @@ class adminService {
     try {
       const id = adminId;
 
+      if(!id) throw new Error("Missing ID")
+
       const exist = await AdminRepo.findById(id);
 
-      if (!exist) {
-        throw new Error("user not found.");
+      if (!exist || exist.role === "Boss") {
+        throw new Error("Invalid user");
       }
 
       const deleted = await AdminRepo.deleteAdm(id);

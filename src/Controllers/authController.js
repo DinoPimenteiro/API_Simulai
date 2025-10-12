@@ -1,38 +1,40 @@
-import authService from "../Services/AuthSV.js";
+import AuthService from "../Services/Auth/BaseAuthService.js";
+import TokenAuthService from "../Services/Auth/TokenAuthService.js";
+import AdminAuthService from "../Services/Auth/AdminAuthService.js";
+import MailAuthService from "../Services/Auth/MailAuthService.js";
+import { sendError, errors } from "../utils/sendError.js";
+import getToken from "../utils/getToken.js";
 
 class authController {
   async login(req, res) {
     try {
-      const { acessToken, rawToken, message } = await authService.authenticate(
+      const data = await AuthService.authenticate(
         req.body,
         req.headers["user-agent"]
       );
 
-      if (message) {
-        res.status(300).json(message);
-      }
-      // Ajeitar por segurança depois
-      if (rawToken && !message) {
-        res.cookie("refreshToken", rawToken, {
+      if (data?.rawToken) {
+        res.cookie("refreshToken", data.rawToken, {
           maxAge: 7 * 24 * 60 * 60 * 1000,
         });
-      } else {
-        res.json({ Error: "Missing token" });
       }
 
-      if (acessToken) {
-        res.status(200).json(acessToken, acessToken);
-      } else {
-        res.status(400).json({ Error: "deu ruim ó doido" });
+      if (data?.message) {
+        res.status(300).json(data.message);
       }
+
+      if (data.acessToken) {
+        return res.status(200).json({ success: true, data: data.acessToken });
+      }
+      return sendError(res, "invalid credentials", 401, errors.auth);
     } catch (err) {
-      res.status(400).json(err.message);
+      return sendError(res, err.message, 500, errors.unexpected);
     }
   }
-  
+
   async loginAdmin(req, res) {
     try {
-      const { acessToken, rawToken } = await authService.validateAdminCode(
+      const { acessToken, rawToken } = await AdminAuthService.validateAdminCode(
         req.params.id,
         req.body,
         req.headers["user-agent"]
@@ -43,138 +45,138 @@ class authController {
           maxAge: 7 * 24 * 60 * 60 * 1000,
         });
       } else {
-        res.json({ Error: "Missing token" });
+        return sendError(res, "missing token", 400, errors.auth);
       }
 
       if (acessToken) {
-        res.status(200).json(acessToken, rawToken);
-      } else {
-        res.status(404).json({ error: "Invalid Data." });
+        return res
+          .status(200)
+          .json({ success: true, data: { acessToken, rawToken } });
       }
+      return sendError(res, "invalid admin credentials", 401, errors.auth);
     } catch (err) {
-      res.status(500).json({error: err.message});
+      return sendError(res, err.message, 500, errors.internal);
     }
   }
 
   async refresh(req, res) {
     try {
       const { newRawToken, updatedToken, newAcessToken } =
-        await authService.refresh(req);
-
-      res.cookie("refreshToken", newRawToken, {
-        maxAge: updatedToken.expiresAt
-      });
+        await TokenAuthService.refresh(req.headers["user-agent"], getToken(req));
 
       if (updatedToken) {
-        res.status(200).json({ updatedToken, newAcessToken });
-      } else {
-        res.status(418).json({ error: "deu ruim no refresh" });
+        res.cookie("refreshToken", newRawToken, {
+          maxAge: updatedToken.expiresAt,
+        });
+        return res.status(200).json({
+          success: true,
+          data: { updatedToken, newAcessToken },
+        });
       }
+      return sendError(res, "failed to refresh token", 400, errors.auth);
     } catch (err) {
-      res.status(400).json(err.message);
+      return sendError(res, err.message, 500, errors.unexpected);
     }
   }
+
   async logout(req, res) {
     try {
-      const destroyedSession = authService.logout(req);
+      const destroyedSession = await AuthService.logout(getToken(req));
 
       if (destroyedSession) {
-        res.status(200).json({ success: "Sucesso ao encerrar sessão." });
-      } else {
-        res.status(404).json({ error: "Erro ao realizar logout." });
+        return res
+          .status(200)
+          .json({ success: true, message: "session successfully terminated", destroyedSession });
       }
+      return sendError(res, "failed to logout", 400, errors.auth);
     } catch (err) {
-      res.status(400).json(err.message);
+      return sendError(res, err.message, 500, errors.internal);
     }
   }
 
   async recoverMail(req, res) {
     try {
-      const { refreshTk, newRawToken } = await authService.recoveryMail(req);
+      const { refreshTk, rawToken } = await MailAuthService.recoveryMail(req.body, req.headers['user-agent']);
 
       if (refreshTk) {
-        res.cookie("refreshToken", newRawToken, {
+        res.cookie("refreshToken", rawToken, {
           maxAge: 8 * 60 * 1000,
         });
-
-        res.status(200).json(refreshTk);
-      } else {
-        //Alterar para um mensagem genérica
-        res.status(400).json({ error: "failed to send email" });
+        return res.status(200).json({ success: true, data: refreshTk });
       }
+      return sendError(res, "failed to send recovery email", 400, errors.email);
     } catch (err) {
-      throw new Error(err.message);
+      return sendError(res, err.message, 500, errors.internal);
     }
   }
 
   async validCodeMail(req, res) {
     try {
-      const acessTk = await authService.verifyCode(req);
+      const acessTk = await AuthService.verifyCode(req.body, getToken(req));
 
       if (acessTk) {
-        res.status(200).json(acessTk);
-      } else {
-        res.status(418).json({ error: "acess token was not found." });
+        return res.status(200).json({ success: true, data: acessTk });
       }
+      return sendError(res, "access token not found", 404, errors.auth);
     } catch (err) {
-      throw new Error(err.message);
+      return sendError(res, err.message, 500, errors.internal);
     }
   }
 
   async resetPass(req, res) {
     try {
-      const confirm = await authService.resetPassword(req);
+      const confirm = await AuthService.resetPassword(req.body, req.params);
 
       if (confirm) {
-        res.status(200).json(confirm);
-      } else {
-        res.status(500).json({ error: "fudeu" });
+        return res.status(200).json({ success: true, data: confirm });
       }
+      return sendError(res, "failed to reset password", 400, errors.auth);
     } catch (err) {
-      res.status(410).json(err.message);
+      return sendError(res, err.message, 500, errors.internal);
     }
   }
+
   async recruitMail(req, res) {
     try {
-      const { invitationaLink } = await authService.sendRecruitEmail(req);
+      const { invitationaLink } = await MailAuthService.sendRecruitEmail(req.body, getToken(req));
 
       if (invitationaLink) {
-        res.status(200).json(invitationaLink);
-      } else {
-        res.status(418).json({ error: "DESGRAÇA" });
+        return res.status(200).json({ success: true, data: invitationaLink });
       }
+      return sendError(
+        res,
+        "failed to send recruitment email",
+        400,
+        errors.email
+      );
     } catch (err) {
-      res.status(500).json(err.message);
+      return sendError(res, err.message, 500, errors.internal);
     }
   }
 
   async registerAdmin(req, res) {
     try {
-      const newManager = await authService.authenticateAdmin(req);
+      const newManager = await AdminAuthService.authenticateAdmin(req.params, req.headers['user-agent'], req.body);
 
       if (newManager) {
-        res.status(200).json(newManager);
-      } else {
-        res.status(400).json({ error: "Erro no registro" });
+        return res.status(200).json({ success: true, data: newManager });
       }
+      return sendError(res, "failed to register admin", 400, errors.data);
     } catch (err) {
-      res.status(500).json(err.message);
+      return sendError(res, err.message, 500, errors.internal);
     }
   }
 
   async validateInvite(req, res) {
     try {
-      const info = await authService.validateInvite(req);
+      const info = await AdminAuthService.validateInvite(req.params);
 
       if (info) {
-        res.status(200).json(info);
-      } else {
-        res
-          .status(400)
-          .json({ error: "Não foi possível requisitar as informações." });
+        return res.status(200).json({ success: true, data: info });
       }
+      return sendError(res, "unable to retrieve invite info", 400, errors.data);
     } catch (err) {
-      res.status(500).json(err.message);
+      return sendError(res, err.message, 500, errors.internal);
     }
   }
 }

@@ -12,6 +12,10 @@ import getToken from "../utils/getToken.js";
 import GeneralValidations from "../utils/generalValidations.js";
 
 class authService {
+
+  constructor(){
+
+  }
   //Login
   async authenticate(userdata, headers) {
     try {
@@ -71,6 +75,7 @@ class authService {
           message,
         };
       }
+    
 
       const user = await ComparePass(password, client.passwordHash);
 
@@ -121,7 +126,7 @@ class authService {
 
     if (validAdmin) {
       return {
-        message: `${process.env.APP_URL}/admin/login/${admin._id}`,
+        message: `${process.env.APP_URL}/admin/login/${admin._id}`
       };
     } else {
       throw new Error("Incorrect password");
@@ -137,7 +142,6 @@ class authService {
 
       if (!adm) throw new Error("Manager not found.");
       
-
       if (!device) throw new Error("Missing device.");
 
       decryptedSecret = decrypt(adm.secret);

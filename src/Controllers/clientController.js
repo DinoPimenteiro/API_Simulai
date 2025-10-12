@@ -1,28 +1,41 @@
 import clientService from "../Services/ClientSV.js";
 import mailService from "../Services/MailSV.js";
+import { sendError, errors } from "../utils/sendError.js";
 
 class clientController {
   async newClient(req, res) {
     try {
-      const newUser = await clientService.register(req);
+      const profileImagePath = req.files?.profileImage?.[0]?.path || null;
+      const resumePath = req.files?.resume?.[0]?.path || null;
+
+      const newUser = await clientService.register(
+        req.body,
+        profileImagePath,
+        resumePath,
+        req.headers["user-agent"]
+      );
+
       if (newUser) {
-        res.status(200).json(newUser);
+        res.status(200).json({ success: true, data: newUser });
       } else {
-        res.status(404).json({ Error: newUser });
+        sendError(res, "failed to create user", 400, errors.data);
       }
     } catch (err) {
-      res.status(404).json(err.message);
+      sendError(res, err.message, 500, errors.internal);
     }
   }
 
-  // Rota para testes
   async getAll(req, res) {
     try {
       const users = await clientService.selectAll();
 
-      res.status(200).json(users);
+      if (users) {
+        res.status(200).json({ success: true, data: users });
+      } else {
+        sendError(res, "no users found", 404);
+      }
     } catch (err) {
-      res.status(404).json(err.message);
+      sendError(res, err.message, 500, errors.internal);
     }
   }
 
@@ -30,53 +43,69 @@ class clientController {
     try {
       if (req.user.id === req.params.id) {
         const user = await clientService.selectOne(req.params.id);
-        res.status(200).json(user);
+        res.status(200).json({ success: true, data: user });
       } else {
-        res.status(404).json({ error: "Bad request." });
+        sendError(res, "unauthorized access", 401, errors.unauthorized);
       }
     } catch (err) {
-      res.status(404).json(err.message);
+      sendError(res, err.message, 500, errors.internal);
     }
   }
+
   async deleteUser(req, res) {
     try {
       if (req.user.id === req.params.id) {
         const userDeleted = await clientService.delete(req.params.id);
-        res.status(200).json(userDeleted);
+        res.status(200).json({ success: true, data: userDeleted });
       } else {
-        res.status(404).json({ error: "Bad request." });
+        sendError(res, "unauthorized request", 401, errors.unauthorized);
       }
     } catch (err) {
-      res.status(404).json(err.message);
+      sendError(res, err.message, 500, errors.internal);
     }
   }
+
   async updateUser(req, res) {
     try {
       if (req.user.id === req.params.id) {
-        const userUp = await clientService.edit(req.params.id, req);
-        res.status(200).json(userUp);
+        const userUpdated = await clientService.edit(req.params.id, req);
+        res.status(200).json({ success: true, data: userUpdated });
       } else {
-        res.status(404).json({ error: "not possible to edit." });
+        sendError(
+          res,
+          "not allowed to edit this user",
+          401,
+          errors.unauthorized
+        );
       }
     } catch (err) {
-      res.status(404).json(err.message);
+      sendError(res, err.message, 500, errors.internal);
     }
   }
+
   async comment(req, res) {
     try {
       if (req.user.id === req.params.id) {
         const comment = await clientService.comment(req.body, req.params.id);
 
         if (comment) {
-          res.status(200).json(comment);
+          res.status(200).json({ success: true, data: comment });
+        } else {
+          sendError(res, "failed to create comment", 400, errors.data);
         }
       } else {
-        res.status(404).json({ error: "aaaaaa" });
+        sendError(
+          res,
+          "unauthorized comment request",
+          401,
+          errors.unauthorized
+        );
       }
     } catch (err) {
-      res.status(418).json(err.message);
+      sendError(res, err.message, 500, errors.internal);
     }
   }
+
   async deleteComment(req, res) {
     try {
       if (req.params.userId === req.user.id) {
@@ -84,27 +113,56 @@ class clientController {
           req.params.userId,
           req.params.commentId
         );
-        res.status(200).json(excludedComment);
+
+        if (excludedComment) {
+          res.status(200).json({ success: true, data: excludedComment });
+        } else {
+          sendError(res, "failed to delete comment", 400, errors.data);
+        }
       } else {
-        res.status(418).json({ error: "deu ruim" });
+        sendError(
+          res,
+          "unauthorized deletion request",
+          401,
+          errors.unauthorized
+        );
       }
     } catch (err) {
-      res.status(500).json(err.message);
+      sendError(res, err.message, 500, errors.internal);
     }
   }
+
   async contactMail(req, res) {
     try {
       const { completeName, subject, message, email } = req.body;
-      const { name, sent } = await mailService.contactEmail(
+      const { name } = await mailService.contactEmail(
         completeName,
         email,
         subject,
         message
       );
 
-      res.status(200).json({message: `Obrigado pelo seu feedback ${name}!`})
+      res.status(200).json({
+        success: true,
+        message: `thank you for your feedback, ${name}!`,
+        email,
+      });
     } catch (err) {
-      res.status(418).json(err.message);
+      sendError(res, err.message, 500, errors.email);
+    }
+  }
+
+  async clientsMetrics(req, res) {
+    try {
+      const data = await clientService.clientsStatistics();
+
+      if (data) {
+        res.status(200).json({ success: true, data: data });
+      } else {
+        sendError(res, "no metrics found", 404);
+      }
+    } catch (err) {
+      sendError(res, err.message);
     }
   }
 }

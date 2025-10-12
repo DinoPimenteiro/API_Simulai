@@ -1,6 +1,6 @@
 import validator from "validator";
 import { PassHash } from "./hashUtils.js";
-import fs from "fs"
+import fs from "fs";
 
 class GeneralValidations {
   async validatePassword(password) {
@@ -9,7 +9,7 @@ class GeneralValidations {
     if (!validator.isStrongPassword(password)) {
       throw new Error("Weak password");
     } else {
-      return passwordHash = await PassHash(password)
+      return (passwordHash = await PassHash(password));
     }
   }
 
@@ -20,9 +20,9 @@ class GeneralValidations {
     return true;
   }
 
-  validateName(name) {
-    if (!name || name.trim() === "") {
-      throw new Error("Invalid name.");
+  validateName(name, error = "Invalid name") {
+    if (!name || validator.trim(name) === "") {
+      throw new Error(error);
     }
     return true;
   }
@@ -35,18 +35,22 @@ class GeneralValidations {
   }
 
   validateUser(user) {
-    if (!user) {
-      throw new Error("Invalid user.");
-    }
+    if (!user) throw new Error("Invalid user");
+
     return true;
+  }
+
+  validateDevice(device) {
+    if (!device || device === undefined) {
+      throw new Error("Invalid device");
+    }
   }
 
   imageDelete(profileImagePath) {
     if (profileImagePath) {
-  fs.unlinkSync(profileImagePath)
-}}
-
+      fs.unlinkSync(profileImagePath);
+    }
+  }
 }
-  
 
 export default new GeneralValidations();

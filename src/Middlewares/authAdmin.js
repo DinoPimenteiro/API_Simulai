@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import { sendError, errors } from "../utils/sendError.js";
 
 export default async function authUser(req, res, next) {
   const authToken = req.headers["authorization"];
@@ -10,17 +11,16 @@ export default async function authUser(req, res, next) {
     try {
       const payload = jwt.verify(token, process.env.JWT_SECRET);
 
-      if(payload.role === "Manager" || payload.role === "Boss"){
+      if (payload.role === "Manager" || payload.role === "Boss") {
         req.admin = payload;
         next();
       } else {
-        res.status(403).json({message: "Unauthorized."})
+        sendError(res, "not allowed", 403, errors.unauthorized)
       }
     } catch (err) {
-      res.status(418).json(err.message)
+      sendError(res, err.message, 401, errors.auth)
     }
-    
   } else {
-    res.status(401).json({error: "undefined token."})
+    sendError(res, "undefined token", 400, errors.auth)
   }
 }

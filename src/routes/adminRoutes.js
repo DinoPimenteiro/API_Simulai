@@ -17,5 +17,4 @@ router.post("/admin/invite", authAdmin, authController.recruitMail);
 router.get("/admins", authAdmin, adminController.getAllAdmin);
 router.delete("/admin/:id", authAdmin, adminController.deleteAdmin);
 
-
 export default router;

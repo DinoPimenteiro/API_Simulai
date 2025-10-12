@@ -7,6 +7,7 @@ const ROUTE = "/admin/register/";
 
 class mailService {
   async recoverEmail(userMail) {
+    generalValidations.validateEmail(userMail);
     const code = Math.floor(1000 + Math.random() * 9000);
 
     const body = {
@@ -19,16 +20,21 @@ class mailService {
 
     try {
       const sent = await transporter.sendMail(body);
-      return {
-        sent,
-        code,
-      };
+
+      if (sent.response.length > 0) {
+        return {
+          code,
+        };
+      } else {
+        throw new Error("email was not sent");
+      }
     } catch (err) {
-      throw new Error(err.message);
+      throw err;
     }
   }
 
   async recruitEmail(email) {
+    generalValidations.validateEmail(email);
     const timeLimit = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
     const { qrCodeLink, secret } = await generateTotp(email);
@@ -43,14 +49,12 @@ class mailService {
 
     const findInvite = await InviteTokenRepo.findByUser(email);
 
-    if (findInvite) {
-      throw new Error("Pending invite.");
-    }
+    if (findInvite) throw new Error("Pending invite.");
 
     const savedInvite = await InviteTokenRepo.saveToken(adminInfo);
 
     if (!savedInvite) {
-      throw new Error("Não salvou o invite.");
+      throw new Error("Invite was not saved");
     }
 
     // http://localhost:4000/admin/register/:id
@@ -67,33 +71,35 @@ class mailService {
     try {
       const sent = await transporter.sendMail(body);
 
-      return {
-        sent,
-        invitationaLink,
-      };
+      if (sent.response.length > 0) {
+        return {
+          invitationaLink,
+        };
+      }
     } catch (err) {
-      throw new Error(err.message);
+      throw err;
     }
   }
+
   async contactEmail(name, email, subject, message) {
     generalValidations.validateName(name);
     generalValidations.validateEmail(email);
 
     const body = {
-      from: email,
-      to: process.env.CLIENT_ID,
+      from: process.env.CLIENT_ID,
+      to: process.env.CONTACT_ID,
       subject: subject,
-      html: message,
+      html: `${message}\n$Enviado por: ${email}`,
       text: message,
     };
 
     try {
       const sent = await transporter.sendMail(body);
 
-      if (sent.accepted) {
+      if (sent.response.length > 0) {
         return {
-          sent,
           name,
+          email,
         };
       } else {
         sent.response;
