@@ -4,6 +4,7 @@ import AdminAuthService from "../Services/Auth/AdminAuthService.js";
 import MailAuthService from "../Services/Auth/MailAuthService.js";
 import { sendError, errors } from "../utils/sendError.js";
 import getToken from "../utils/getToken.js";
+import ClientAuthService from "../Services/Auth/ClientAuthService.js";
 
 class authController {
   async login(req, res) {
@@ -13,18 +14,24 @@ class authController {
         req.headers["user-agent"]
       );
 
-      if (data?.rawToken) {
+      if (data.rawToken) {
         res.cookie("refreshToken", data.rawToken, {
           maxAge: 7 * 24 * 60 * 60 * 1000,
         });
+      } else {
+        return sendError(res, "missing token", 400, errors.auth);
       }
 
       if (data?.message) {
         res.status(300).json(data.message);
       }
 
+      if (data.updatedToken) {
+        return res.status(200).json({ success: true, data: data });
+      }
+
       if (data.acessToken) {
-        return res.status(200).json({ success: true, data: data.acessToken });
+        return res.status(200).json({ success: true, data: data });
       }
       return sendError(res, "invalid credentials", 401, errors.auth);
     } catch (err) {
@@ -59,18 +66,45 @@ class authController {
     }
   }
 
+  async loginClient(req, res) {
+    try {
+      const { acessToken, rawToken } = await ClientAuthService.clientLogin(
+        req.params.id,
+        req.headers["user-agent"]
+      );
+
+      if (rawToken) {
+        res.cookie("refreshToken", rawToken, {
+          maxAge: 7 * 24 * 60 * 60 * 1000,
+        });
+      } else {
+        return sendError(res, "missing token", 400, errors.auth);
+      }
+
+      if (acessToken) {
+        res.status(200).json({ data: acessToken });
+      }
+    } catch (err) {
+      return sendError(res, err.message, 500, errors.internal);
+    }
+  }
+
   async refresh(req, res) {
     try {
-      const { newRawToken, updatedToken, newAcessToken } =
-        await TokenAuthService.refresh(req.headers["user-agent"], getToken(req));
+      const acessCredentials = await TokenAuthService.refresh(
+        req.headers["user-agent"],
+        getToken(req)
+      );
 
-      if (updatedToken) {
-        res.cookie("refreshToken", newRawToken, {
+      const { rawToken, updatedToken } = acessCredentials;
+
+      if (rawToken) {
+        res.cookie("refreshToken", rawToken, {
           maxAge: updatedToken.expiresAt,
         });
         return res.status(200).json({
           success: true,
-          data: { updatedToken, newAcessToken },
+          data: acessCredentials,
         });
       }
       return sendError(res, "failed to refresh token", 400, errors.auth);
@@ -84,9 +118,11 @@ class authController {
       const destroyedSession = await AuthService.logout(getToken(req));
 
       if (destroyedSession) {
-        return res
-          .status(200)
-          .json({ success: true, message: "session successfully terminated", destroyedSession });
+        return res.status(200).json({
+          success: true,
+          message: "session successfully terminated",
+          destroyedSession,
+        });
       }
       return sendError(res, "failed to logout", 400, errors.auth);
     } catch (err) {
@@ -96,7 +132,10 @@ class authController {
 
   async recoverMail(req, res) {
     try {
-      const { refreshTk, rawToken } = await MailAuthService.recoveryMail(req.body, req.headers['user-agent']);
+      const { refreshTk, rawToken } = await MailAuthService.recoveryMail(
+        req.body,
+        req.headers["user-agent"]
+      );
 
       if (refreshTk) {
         res.cookie("refreshToken", rawToken, {
@@ -138,7 +177,10 @@ class authController {
 
   async recruitMail(req, res) {
     try {
-      const { invitationaLink } = await MailAuthService.sendRecruitEmail(req.body, getToken(req));
+      const { invitationaLink } = await MailAuthService.sendRecruitEmail(
+        req.body,
+        getToken(req)
+      );
 
       if (invitationaLink) {
         return res.status(200).json({ success: true, data: invitationaLink });
@@ -156,7 +198,11 @@ class authController {
 
   async registerAdmin(req, res) {
     try {
-      const newManager = await AdminAuthService.authenticateAdmin(req.params, req.headers['user-agent'], req.body);
+      const newManager = await AdminAuthService.authenticateAdmin(
+        req.params,
+        req.headers["user-agent"],
+        req.body
+      );
 
       if (newManager) {
         return res.status(200).json({ success: true, data: newManager });

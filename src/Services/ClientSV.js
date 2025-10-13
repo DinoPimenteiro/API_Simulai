@@ -5,6 +5,7 @@ import ClientAuthService from "./Auth/ClientAuthService.js";
 import { Capitalize } from "../utils/stringUtils.js";
 import { ValidLevel, validComment } from "../utils/userValidator.js";
 import GeneralValidations from "../utils/generalValidations.js";
+import fs from "fs";
 
 class clientService {
   async register(data, profileFile, curriculumFile, headers) {
@@ -16,6 +17,7 @@ class clientService {
 
     age = parseInt(age, 10);
     name = validator.trim(Capitalize(name));
+    email = email.trim();
 
     try {
       const exists = await ClientRepo.findEmail(email);
@@ -37,10 +39,12 @@ class clientService {
         passwordHash,
       });
 
-      await client.save();
+      console.log(client); // veja o objeto inteiro
+      console.log(client._id); // deve existir
+      console.log(client.id);
 
       const acessCredentials = await ClientAuthService.clientLogin(
-        client._id.toString(),
+        client._id,
         headers
       );
 
@@ -93,6 +97,8 @@ class clientService {
 
       return {
         id: user._id,
+        profileImage: user.profileImage,
+        curriculum: user.resume,
         name: user.name,
         email: user.email,
         age: user.age,
@@ -133,6 +139,9 @@ class clientService {
     let curriculumPath = curriculumFile;
     const client = await ClientRepo.findID(id);
 
+    let invalidName;
+    let invalidAge;
+
     GeneralValidations.validateUser(client);
 
     try {
@@ -151,9 +160,18 @@ class clientService {
       var name = validator.trim(name);
       var age = parseInt(age, 10);
 
-      GeneralValidations.validateName(name);
+      invalidName = typeof name === "string" || age === "";
+      invalidAge = typeof age === "number";
+
+      if (!invalidName) {
+        name = client.name.toString();
+      }
+
+      if (!invalidAge) {
+        age = parseInt(client.age);
+      }
+
       GeneralValidations.validateName(job, "Invalid job");
-      GeneralValidations.validateAge(age);
 
       if (!ValidLevel(level)) throw new Error("Invalid level.");
 

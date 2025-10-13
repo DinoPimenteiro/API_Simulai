@@ -1,5 +1,3 @@
-import crypto from 'crypto'
+import ClientAuthService from "./src/Services/Auth/ClientAuthService.js";
 
-let a = crypto.randomBytes(42);
-
-console.log(a.toString('base64'))
+ClientAuthService.clientLogin()

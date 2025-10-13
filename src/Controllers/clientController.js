@@ -5,15 +5,27 @@ import { sendError, errors } from "../utils/sendError.js";
 class clientController {
   async newClient(req, res) {
     try {
-      const profileImagePath = req.files?.profileImage?.[0]?.path || null;
-      const resumePath = req.files?.resume?.[0]?.path || null;
+      const { profilePath, resumePath } = req.savedFiles || {
+        profilePath: null,
+        resumePath: null,
+      };
 
       const newUser = await clientService.register(
         req.body,
-        profileImagePath,
+        profilePath,
         resumePath,
         req.headers["user-agent"]
       );
+
+      const rawToken = newUser.acessCredentials;
+
+      if (rawToken) {
+        res.cookie("refreshToken", rawToken.rawToken, {
+          maxAge: 7 * 24 * 60 * 60 * 1000,
+        });
+      } else {
+        return sendError(res, "missing token", 400, errors.auth);
+      }
 
       if (newUser) {
         res.status(200).json({ success: true, data: newUser });
@@ -45,10 +57,10 @@ class clientController {
         const user = await clientService.selectOne(req.params.id);
         res.status(200).json({ success: true, data: user });
       } else {
-        sendError(res, "unauthorized access", 401, errors.unauthorized);
+        return sendError(res, "unauthorized access", 401, errors.unauthorized);
       }
     } catch (err) {
-      sendError(res, err.message, 500, errors.internal);
+      return sendError(res, err.message, 500, errors.internal);
     }
   }
 
@@ -67,8 +79,15 @@ class clientController {
 
   async updateUser(req, res) {
     try {
+      const { profilePath, resumePath } = req.savedFiles;
+
       if (req.user.id === req.params.id) {
-        const userUpdated = await clientService.edit(req.params.id, req);
+        const userUpdated = await clientService.edit(
+          req.params.id,
+          req.body,
+          profilePath,
+          resumePath
+        );
         res.status(200).json({ success: true, data: userUpdated });
       } else {
         sendError(

@@ -29,7 +29,7 @@ class AuthService {
         }
 
         if (adminPass) {
-          return message = `${process.env.APP_URL}/admin/login/${admin._id}`;
+          return (message = `${process.env.APP_URL}/admin/login/${admin._id}`);
         }
         if (clientPass) {
           const result = await ClientAuthService.clientLogin(
@@ -44,7 +44,7 @@ class AuthService {
       if (admin) {
         const adminPass = await ComparePass(password, admin.passwordHash);
         if (adminPass) {
-          return message = `${process.env.APP_URL}/admin/login/${admin._id}`;
+          return (message = `${process.env.APP_URL}/admin/login/${admin._id}`);
         }
         throw new Error("Invalid credentials");
       }
@@ -52,11 +52,14 @@ class AuthService {
       if (client) {
         const clientPass = await ComparePass(password, client.passwordHash);
         if (clientPass) {
-          const result = await ClientAuthService.clientLogin(
-            client._id,
-            device
-          );
-          return result;
+          const { updatedToken, rawToken, acessToken } =
+            await ClientAuthService.clientLogin(client._id, device);
+
+          if (updatedToken) {
+            return { updatedToken, rawToken, acessToken };
+          } else {
+            return { rawToken, acessToken };
+          }
         }
         throw new Error("Invalid credentials");
       }
@@ -66,7 +69,8 @@ class AuthService {
       throw err;
     }
   }
-
+  // rawToken
+  // updatedToken
   chooseAccount(admin, client) {
     return {
       admin: `${process.env.APP_URL}/admin/login/${admin._id}`,

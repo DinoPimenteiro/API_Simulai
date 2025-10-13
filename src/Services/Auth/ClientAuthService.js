@@ -16,25 +16,37 @@ class ClientAuthService {
 
       if (isUser) {
         const acessToken = await TokenAuthService.generateJwt(user, "acess");
-        const { body, rawToken } = TokenAuthService.getRefreshToken(
-          user,
-          "acess",
-          device,
-          expirationTime
-        );
 
         const existsToken = await RfshTokenRepo.findByUserEmail(user.email);
 
-        if (existsToken && existsToken.type === "acess") {
-          const updateToken = await RfshTokenRepo.refreshToken(
-            existsToken._id,
+        if (existsToken.length > 0) {
+          const { body, rawToken } = TokenAuthService.getRefreshToken(
+            user,
+            "acess",
+            device,
+            existsToken[0].expiresAt
+          );
+
+          const updatedToken = await RfshTokenRepo.refreshToken(
+            existsToken[0]._id,
             body
           );
-          return { updateToken, acessToken };
+
+          if (updatedToken) {
+            return { updatedToken, acessToken, rawToken };
+          }
         } else {
-          const refreshTk = RfshTokenRepo.saveToken(body);
-          return { acessToken, rawToken, refreshTk };
+          const { body, rawToken } = TokenAuthService.getRefreshToken(
+            user,
+            "acess",
+            device,
+            expirationTime
+          );
+          const refreshTk = await RfshTokenRepo.saveToken(body);
+          return { acessToken, rawToken };
         }
+      } else {
+        throw new Error("User doesn´t exists");
       }
     } catch (err) {
       throw err;

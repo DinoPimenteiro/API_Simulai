@@ -8,15 +8,18 @@ class TokenAuthService {
   async refresh(headers, cookieToken) {
     try {
       const device = headers;
-      const raw = cookieToken;
+      const rawk = cookieToken;
 
-      if (!raw) {
+      if (!rawk) {
         throw new Error("Token not found.");
       }
 
       GeneralValidations.validateDevice(device);
-      const refreshToken = await RefreshTokenRepo.findByToken(raw);
+      const refreshToken = await RefreshTokenRepo.findByToken(rawk);
 
+      let a = cryptoHash(rawk);
+      console.log("RAW TOKEN RECEBIDO:", rawk);
+      console.log(a);
       // Dá pra pôr validação por tempo também. Seria bom.
       if (!refreshToken) throw new Error("Invalid token.");
 
@@ -24,18 +27,29 @@ class TokenAuthService {
         throw new Error("The type of token need to be 'acess'");
       }
 
-      const { acessToken } = await this.generateJwt(
-        refreshToken,
-        refreshToken.type
-      );
+      const payload = {
+        id: refreshToken.userId,
+        email: refreshToken.userEmail,
+        type: refreshToken.type,
+        role: refreshToken.role,
+      };
 
-      const { body, rawToken } = this.getRefreshToken(
-        refreshToken,
-        refreshToken.type,
-        device,
-        refreshToken.expiresAt,
-        refreshToken.recoveryCode
-      );
+      const acessToken = jwt.sign(payload, process.env.JWT_SECRET, {
+        expiresIn: "15m",
+      });
+
+      const rawToken = crypto.randomBytes(40).toString("hex");
+      const hashedToken = cryptoHash(rawToken);
+
+      const body = {
+        userId: refreshToken.userId,
+        userEmail: refreshToken.userEmail,
+        type: refreshToken.type,
+        role: refreshToken.role,
+        device: device,
+        token: hashedToken,
+        expiresAt: null,
+      };
 
       const updatedToken = await RefreshTokenRepo.refreshToken(
         refreshToken._id,
@@ -47,9 +61,9 @@ class TokenAuthService {
       }
 
       return {
-        updatedToken: updatedToken,
-        newAcessToken: acessToken,
-        newRawToken: rawToken,
+        updatedToken,
+        acessToken,
+        rawToken,
       };
     } catch (err) {
       throw err;

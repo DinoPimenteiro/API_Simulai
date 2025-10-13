@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import { sendError, errors } from "../utils/sendError.js";
 
 export default async function authUser(req, res, next) {
   const authToken = req.headers["authorization"];

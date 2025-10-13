@@ -3,16 +3,16 @@ import { cryptoHash } from "../utils/hashUtils.js";
 
 class RefreshTokenRepo {
   async findByToken(raw) {
-    const token = cryptoHash(raw)
-    return RefreshToken.where({ token: token }).findOne();
+    const token = cryptoHash(raw);
+    return RefreshToken.findOne({ token });
   }
 
   async findByUser(id) {
     return RefreshToken.where({ userId: id }).findOne();
   }
 
-  async findByUserEmail(email){
-    return RefreshToken.find({userEmail: email});
+  async findByUserEmail(email) {
+    return RefreshToken.find({ userEmail: email });
   }
 
   async destroyToken(id) {
