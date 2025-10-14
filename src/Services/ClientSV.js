@@ -120,6 +120,10 @@ class clientService {
         await fs.promises.unlink(user.profileImage);
       }
 
+      if (fs.existsSync(user.resume)) {
+        await fs.promises.unlink(user.resume);
+      }
+
       const userSessions = await RefreshTokenRepo.destroyManyTokens(id);
       const deleted = await ClientRepo.destroy(id);
 
@@ -147,10 +151,14 @@ class clientService {
     try {
       if (!profileImagePath) {
         profileImagePath = client.profileImage;
+      } else {
+        await fs.promises.unlink(profileFile);
       }
 
       if (!curriculumPath) {
         curriculumPath = client.resume;
+      } else {
+        await fs.promises.unlink(curriculumFile);
       }
 
       var { name, age, level, job } = data;
@@ -195,6 +203,7 @@ class clientService {
         job: edited.job,
         level: edited.level,
       };
+
     } catch (err) {
       if (profileFile && fs.existsSync(profileFile)) {
         await fs.promises.unlink(profileFile);
@@ -234,7 +243,7 @@ class clientService {
         body,
         rating,
         type,
-        createdAt: new Date().toLocaleDateString(),
+        createdAt: Date.now()
       });
 
       if (userComment) {

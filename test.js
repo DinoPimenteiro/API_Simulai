@@ -1,3 +1,3 @@
-import ClientAuthService from "./src/Services/Auth/ClientAuthService.js";
+import crypto from 'crypto';
 
-ClientAuthService.clientLogin()
+console.log(crypto.randomBytes(32).toString('base64'));

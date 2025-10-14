@@ -1,6 +1,7 @@
 import clientService from "../Services/ClientSV.js";
 import mailService from "../Services/MailSV.js";
 import { sendError, errors } from "../utils/sendError.js";
+import fs from 'fs';
 
 class clientController {
   async newClient(req, res) {
@@ -90,6 +91,15 @@ class clientController {
         );
         res.status(200).json({ success: true, data: userUpdated });
       } else {
+        
+        if (fs.existsSync(profilePath)) {
+          await fs.promises.unlink(profilePath);
+        }
+
+        if (fs.existsSync(resumePath)) {
+          await fs.promises.unlink(resumePath);
+        }
+
         sendError(
           res,
           "not allowed to edit this user",
