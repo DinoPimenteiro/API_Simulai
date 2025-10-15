@@ -2,17 +2,23 @@ import ClientRepo from "../../Repositories/ClientRepo.js";
 import RfshTokenRepo from "../../Repositories/RfshTokenRepo.js";
 import TokenAuthService from "./TokenAuthService.js";
 import generalValidations from "../../utils/generalValidations.js";
+import { ComparePass } from "../../utils/hashUtils.js";
 
 class ClientAuthService {
-  async clientLogin(userId, dispo) {
+  async clientLogin(userId, dispo, pass = undefined) {
     try {
       const id = userId;
       const device = dispo;
       const user = await ClientRepo.findID(id);
+      const password = pass;
       let expirationTime = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
       const isUser = generalValidations.validateUser(user);
       generalValidations.validateDevice(device);
+
+      if (password && !(await ComparePass(password, user.passwordHash))) {
+        throw new Error("Invalid entry");
+      }
 
       if (isUser) {
         const acessToken = await TokenAuthService.generateJwt(user, "acess");

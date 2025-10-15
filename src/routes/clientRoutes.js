@@ -14,7 +14,7 @@ router.delete("/user/:userId/comment/:commentId", authUser, clientController.del
 
 router.post("/recover-mail", authController.recoverMail);
 router.post("/recover-mail/valid", authController.validCodeMail);
-router.put("/reset-password", authUser, authController.resetPass);
+router.put("/reset-password/:id", authUser, authController.resetPass);
 router.post("/contact", clientController.contactMail);
 
 router.get("/metrics", clientController.clientsMetrics);

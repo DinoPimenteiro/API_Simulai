@@ -13,4 +13,7 @@ router.post("/admin/register/:id", authController.registerAdmin);
 router.get("/admin/register/:id", authController.validateInvite);
 router.post('/admin/login/:id', authController.loginAdmin);
 
+// Client
+router.post("/user/login/:id", authController.loginClient);
+
 export default router;

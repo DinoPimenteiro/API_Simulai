@@ -18,8 +18,6 @@ class TokenAuthService {
       const refreshToken = await RefreshTokenRepo.findByToken(rawk);
 
       let a = cryptoHash(rawk);
-      console.log("RAW TOKEN RECEBIDO:", rawk);
-      console.log(a);
       // Dá pra pôr validação por tempo também. Seria bom.
       if (!refreshToken) throw new Error("Invalid token.");
 

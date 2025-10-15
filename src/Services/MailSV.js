@@ -2,6 +2,7 @@ import transporter from "../config/mailConfig.js";
 import InviteTokenRepo from "../Repositories/InviteTokenRepo.js";
 import { generateTotp } from "../config/2FAConfig.js";
 import generalValidations from "../utils/generalValidations.js";
+import AdminRepo from "../Repositories/AdminRepo.js";
 
 const ROUTE = "/admin/register/";
 
@@ -36,6 +37,10 @@ class mailService {
   async recruitEmail(email) {
     generalValidations.validateEmail(email);
     const timeLimit = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+    const exists = await AdminRepo.findByEmail(email);
+
+    if (exists) throw new Error("Admin already exists");
 
     const { qrCodeLink, secret } = await generateTotp(email);
 
@@ -89,7 +94,7 @@ class mailService {
       from: process.env.CLIENT_ID,
       to: process.env.CONTACT_ID,
       subject: subject,
-      html: `${message}\n$Enviado por: ${email}`,
+      html: `${message}\nEnviado por: ${email}`,
       text: message,
     };
 

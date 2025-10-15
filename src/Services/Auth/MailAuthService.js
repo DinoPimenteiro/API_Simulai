@@ -18,6 +18,12 @@ class MailAuthService {
 
       GeneralValidations.validateUser(user);
 
+      const existsToken = await RefreshTokenRepo.findByUserEmail(user.email);
+
+      if (existsToken.length > 0) {
+        await RefreshTokenRepo.destroyManyTokens(user._id);
+      }
+
       const { code } = await mailService.recoverEmail(email);
       const { body, rawToken } = TokenAuthService.getRefreshToken(
         user,
@@ -56,7 +62,7 @@ class MailAuthService {
       const token = await RefreshTokenRepo.findByToken(rawToken);
 
       if (!token) {
-        throw new Error("Token was not found in database.");
+        throw new Error("Token was not found in database");
       }
 
       if (token.role !== "Boss") {
@@ -65,11 +71,9 @@ class MailAuthService {
 
       const { invitationaLink } = await mailService.recruitEmail(email);
 
-      if (sent.accepted) {
-        return {
-          invitationaLink,
-        };
-      }
+      return {
+        invitationaLink,
+      };
     } catch (err) {
       throw err;
     }

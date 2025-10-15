@@ -1,10 +1,12 @@
 import jwt from "jsonwebtoken";
+import validator from "validator";
 import RefreshTokenRepo from "../../Repositories/RfshTokenRepo.js";
 import ClientRepo from "../../Repositories/ClientRepo.js";
 import AdminRepo from "../../Repositories/AdminRepo.js";
 import ClientAuthService from "./ClientAuthService.js";
 import { ComparePass } from "../../utils/hashUtils.js";
 import GeneralValidations from "../../utils/generalValidations.js";
+import AdminAuthService from "./AdminAuthService.js";
 
 class AuthService {
   //Login
@@ -25,11 +27,18 @@ class AuthService {
         const adminPass = await ComparePass(password, admin.passwordHash);
 
         if (clientPass && adminPass) {
-          return this.chooseAccount(client, admin);
+          return this.chooseAccount(admin, client);
         }
 
         if (adminPass) {
-          return (message = `${process.env.APP_URL}/admin/login/${admin._id}`);
+          try {
+            const { acessToken, rawToken } =
+              await AdminAuthService.validateBoss(admin._id, device);
+            return { acessToken, rawToken };
+          } catch (_) {
+            message = `${process.env.APP_URL}/admin/login/${admin._id}`;
+            return { message };
+          }
         }
         if (clientPass) {
           const result = await ClientAuthService.clientLogin(
@@ -44,7 +53,14 @@ class AuthService {
       if (admin) {
         const adminPass = await ComparePass(password, admin.passwordHash);
         if (adminPass) {
-          return (message = `${process.env.APP_URL}/admin/login/${admin._id}`);
+          try {
+            const { acessToken, rawToken } =
+              await AdminAuthService.validateBoss(admin._id, device);
+            return { acessToken, rawToken };
+          } catch (_) {
+            message = `${process.env.APP_URL}/admin/login/${admin._id}`;
+            return { message };
+          }
         }
         throw new Error("Invalid credentials");
       }
@@ -72,9 +88,12 @@ class AuthService {
   // rawToken
   // updatedToken
   chooseAccount(admin, client) {
+
     return {
-      admin: `${process.env.APP_URL}/admin/login/${admin._id}`,
-      client: `${process.env.APP_URL}/user/login/${client.id}`,
+      message: {
+        admin: `${process.env.APP_URL}/admin/login/${admin._id}`,
+        client: `${process.env.APP_URL}/user/login/${client.id}`,
+      }
     };
   }
 
@@ -97,6 +116,7 @@ class AuthService {
       const deletedToken = await RefreshTokenRepo.destroyToken(
         refreshToken._id
       );
+      ("");
 
       if (deletedToken) {
         return deletedToken;
@@ -113,9 +133,7 @@ class AuthService {
       const { code } = data;
       const token = raw;
 
-      if (!token) {
-        throw new Error("Missing token.");
-      }
+      if (!token) throw new Error("Missing token.");
 
       const userToken = await RefreshTokenRepo.findByToken(token);
 
@@ -123,8 +141,8 @@ class AuthService {
         throw new Error("Invalid token");
       }
 
-      if (userToken.type !== "recover_mail") {
-        throw new Error("Token type must be recover_mail");
+      if (userToken.type !== "recover-mail") {
+        throw new Error("Token type must be recover-mail");
       }
 
       if (code === userToken.recoveryCode) {
@@ -139,7 +157,7 @@ class AuthService {
           expiresIn: "5m",
         });
 
-        return acessToken;
+        return { acessToken, id: userToken.userId };
       } else {
         throw new Error("Invalid code.");
       }
@@ -153,15 +171,22 @@ class AuthService {
       const { password } = data;
       const { id } = params;
 
+      if (!id || !validator.isHexadecimal(id) || id.length !== 24) {
+        throw new Error("Invalid id");
+      }
       const passwordHash = await GeneralValidations.validatePassword(password);
+
+      const discartTk = await RefreshTokenRepo.destroyManyTokens(id);
+
+      if (discartTk.deletedCount == 0) {
+        throw new Error("You already changed your password. Invalid access");
+      }
 
       const user = await ClientRepo.update(id, {
         passwordHash: passwordHash,
       });
 
       if (user) {
-        const discartTk = await RefreshTokenRepo.destroyManyTokens(id);
-
         return {
           id: user._id,
           email: user.email,

@@ -21,7 +21,7 @@ export function verifyTOTP(adminSecret, adminToken) {
   let secret = decrypt(adminSecret);
   let token = adminToken.toString();
 
-  const valid = authenticator.verify({ secret, token, window: 2 });
+  const valid = authenticator.verify({ secret, token, window: 1 });
   if (!valid) throw new Error("Código TOTP inválido.");
 
   return true

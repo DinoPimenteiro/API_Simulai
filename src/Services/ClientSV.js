@@ -39,10 +39,6 @@ class clientService {
         passwordHash,
       });
 
-      console.log(client); // veja o objeto inteiro
-      console.log(client._id); // deve existir
-      console.log(client.id);
-
       const acessCredentials = await ClientAuthService.clientLogin(
         client._id,
         headers
@@ -203,7 +199,6 @@ class clientService {
         job: edited.job,
         level: edited.level,
       };
-
     } catch (err) {
       if (profileFile && fs.existsSync(profileFile)) {
         await fs.promises.unlink(profileFile);
@@ -243,17 +238,25 @@ class clientService {
         body,
         rating,
         type,
-        createdAt: Date.now()
+        createdAt: Date.now(),
       });
 
       if (userComment) {
         const saved = await client.save();
 
+        let comment = saved.comment;
+
+        let treatedComment = comment.map((c) => {
+          const obj = c.toObject ? c.toObject() : c; // converte se for Document
+          delete obj.status;
+          return obj;
+        });
+
         return {
           id: saved._id,
           name: saved.name,
           email: saved.email,
-          comments: saved.comment,
+          comments: treatedComment,
         };
       } else {
         throw new Error("Not possible to save comment.");
@@ -272,12 +275,27 @@ class clientService {
         throw new Error("Invalid parameters");
       }
 
+      if (
+        !validator.isHexadecimal(clientId) ||
+        !validator.isHexadecimal(comment)
+      ) {
+        throw new Error("Invalid ID type");
+      }
+
+      if (clientId.length !== 24 || comment.length !== 24) {
+        throw new Error("Its not an objectId");
+      }
+
       const deletedComment = await ClientRepo.deleteComment(clientId, comment);
+
+      if (deletedComment.modifiedCount == 0) {
+        throw new Error("Nothing was deleted");
+      }
 
       if (deletedComment) {
         return deletedComment;
       } else {
-        throw new Error("Not possible to delete.");
+        throw new Error("Not possible to delete");
       }
     } catch (err) {
       throw err;
@@ -289,8 +307,8 @@ class clientService {
       const avgRate = await ClientRepo.averageRating();
       const avgAge = await ClientRepo.averageAge();
       const juvenil = await ClientRepo.ageFilter(14, 18);
-      const adults = await ClientRepo.ageFilter(18, 24);
-      const seniors = await ClientRepo.ageFilter(24, 30);
+      const adults = await ClientRepo.ageFilter(19, 24);
+      const seniors = await ClientRepo.ageFilter(25, 30);
 
       return {
         media: {
@@ -298,9 +316,9 @@ class clientService {
           age: avgAge,
         },
         age_distribution: {
-          juvenil: juvenil,
-          adults: adults,
-          seniors: seniors,
+          _14_18: juvenil,
+          _19_24: adults,
+          _25_30: seniors,
         },
       };
     } catch (err) {

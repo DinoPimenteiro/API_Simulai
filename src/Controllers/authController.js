@@ -14,16 +14,16 @@ class authController {
         req.headers["user-agent"]
       );
 
+      if (data.message) {
+        return res.status(300).json(data.message);
+      }
+
       if (data.rawToken) {
         res.cookie("refreshToken", data.rawToken, {
           maxAge: 7 * 24 * 60 * 60 * 1000,
         });
       } else {
         return sendError(res, "missing token", 400, errors.auth);
-      }
-
-      if (data?.message) {
-        res.status(300).json(data.message);
       }
 
       if (data.updatedToken) {
@@ -33,6 +33,7 @@ class authController {
       if (data.acessToken) {
         return res.status(200).json({ success: true, data: data });
       }
+
       return sendError(res, "invalid credentials", 401, errors.auth);
     } catch (err) {
       return sendError(res, err.message, 500, errors.unexpected);
@@ -70,7 +71,8 @@ class authController {
     try {
       const { acessToken, rawToken } = await ClientAuthService.clientLogin(
         req.params.id,
-        req.headers["user-agent"]
+        req.headers["user-agent"],
+        req.body.password
       );
 
       if (rawToken) {
@@ -82,7 +84,7 @@ class authController {
       }
 
       if (acessToken) {
-        res.status(200).json({ data: acessToken });
+        res.status(200).json({ data: { acessToken, rawToken } });
       }
     } catch (err) {
       return sendError(res, err.message, 500, errors.internal);
@@ -141,7 +143,11 @@ class authController {
         res.cookie("refreshToken", rawToken, {
           maxAge: 8 * 60 * 1000,
         });
-        return res.status(200).json({ success: true, data: refreshTk });
+        return res.status(200).json({
+          success: true,
+          data: refreshTk,
+          message: `E-mail enviado de recuperação enviado para ${refreshTk.userEmail}`,
+        });
       }
       return sendError(res, "failed to send recovery email", 400, errors.email);
     } catch (err) {
@@ -164,12 +170,16 @@ class authController {
 
   async resetPass(req, res) {
     try {
-      const confirm = await AuthService.resetPassword(req.body, req.params);
-
-      if (confirm) {
-        return res.status(200).json({ success: true, data: confirm });
+      if (req.params.id === req.user.id) {
+        const newPass = await AuthService.resetPassword(req.body, req.params);
+        if (newPass) {
+          return res.status(200).json({ success: true, data: newPass });
+        } else {
+          return sendError(res, "failed to reset password", 400, errors.auth);
+        }
+      } else {
+        return sendError(res, "unauthorized access", 401, errors.unauthorized);
       }
-      return sendError(res, "failed to reset password", 400, errors.auth);
     } catch (err) {
       return sendError(res, err.message, 500, errors.internal);
     }

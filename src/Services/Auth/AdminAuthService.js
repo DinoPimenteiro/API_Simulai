@@ -10,29 +10,57 @@ class AdminAuthService {
     try {
       const { code } = data;
       const device = headers;
-      const adm = await AdminRepo.findById(id);
+      const ID = id;
+
+      console.log(ID)
+      const adm = await AdminRepo.findById(ID);
+
+      if (!adm) {
+        throw new Error("Invalid ID");
+      }
+
       let DateTime = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
       GeneralValidations.validateUser(adm);
       GeneralValidations.validateDevice(device);
 
+      const acessToken = await TokenAuthService.generateJwt(adm, "acess");
+
+      const { body, rawToken } = TokenAuthService.getRefreshToken(
+        adm,
+        "acess",
+        device,
+        DateTime
+      );
+
+      if (!code && adm.role === "Boss") {
+        const savedToken = await RefreshTokenRepo.saveToken(body);
+        if (!savedToken) throw new Error("Not possible to save in database.");
+
+        return {
+          acessToken,
+          rawToken,
+        };
+      }
+
       const verify = verifyTOTP(adm.secret, code);
 
-      if (verify) {
-        const acessToken = await TokenAuthService.generateJwt(adm, "acess");
+      const existTokens = await RefreshTokenRepo.findByUser(adm._id);
 
-        const { body, rawToken } = getRefreshToken(
-          adm,
-          "acess",
-          device,
-          DateTime
+      if (existTokens && verify) {
+        const updatedToken = await RefreshTokenRepo.refreshToken(
+          existTokens._id,
+          body
         );
 
+        return { updatedToken, acessToken };
+      }
+
+      if (verify) {
         const savedToken = await RefreshTokenRepo.saveToken(body);
 
         if (!savedToken) throw new Error("Not possible to save in database.");
 
-        // Mudar depois, manter só para testes
         return {
           acessToken: acessToken,
           rawToken: rawToken,
@@ -43,6 +71,50 @@ class AdminAuthService {
     }
   }
 
+  async validateBoss(id, headers) {
+    try {
+      const device = headers;
+      const ID = id;
+      let DateTime = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      const adm = await AdminRepo.findById(ID);
+
+      if (!adm) {
+        throw new Error("Invalid ID");
+      }
+
+      GeneralValidations.validateUser(adm);
+      GeneralValidations.validateDevice(device);
+
+      const acessToken = await TokenAuthService.generateJwt(adm, "acess");
+
+      const { body, rawToken } = TokenAuthService.getRefreshToken(
+        adm,
+        "acess",
+        device,
+        DateTime
+      );
+
+      const existToken = await RefreshTokenRepo.findByUser(adm._id);
+
+      if (existToken) {
+        await RefreshTokenRepo.refreshToken(existToken._id, body);
+
+        return { rawToken, acessToken };
+      }
+
+      if (adm.role === "Boss") {
+        const savedToken = await RefreshTokenRepo.saveToken(body);
+        if (!savedToken) throw new Error("Not possible to save in database.");
+
+        return {
+          acessToken,
+          rawToken,
+        };
+      }
+    } catch (err) {
+      throw err;
+    }
+  }
   // Cadastro de admin
   async validateInvite(params) {
     try {
@@ -63,7 +135,7 @@ class AdminAuthService {
         qrcode: newInvite.qrcode,
       };
     } catch (err) {
-      throw new err;
+      throw err;
     }
   }
 
@@ -71,7 +143,6 @@ class AdminAuthService {
     try {
       const { id } = params;
       const device = dispo;
-
       const { name, email, age, password, code } = data;
       let passwordHash;
 
@@ -99,7 +170,7 @@ class AdminAuthService {
 
       passwordHash = await GeneralValidations.validatePassword(password);
 
-      verifyTOTP(newAdm.secret, code.toString());
+      verifyTOTP(newAdm.secret, code);
 
       const newManager = await AdminRepo.save({
         name,
@@ -113,7 +184,9 @@ class AdminAuthService {
       newAdm.used = true;
       await newAdm.save();
 
-      return newManager;
+      let { secret, ...info } = newManager;
+
+      return info.toObject() || newManager;
     } catch (err) {
       throw err;
     }
