@@ -145,17 +145,23 @@ class clientService {
     GeneralValidations.validateUser(client);
 
     try {
-      if (!profileImagePath) {
-        profileImagePath = client.profileImage;
+      if (!profileFile) {
+      profileImagePath = client.profileImage;
       } else {
-        await fs.promises.unlink(profileFile);
+      if (client.profileImage && fs.existsSync(client.profileImage)) {
+          await fs.promises.unlink(client.profileImage);
       }
+       profileImagePath = profileFile;
+      } 
 
-      if (!curriculumPath) {
-        curriculumPath = client.resume;
-      } else {
-        await fs.promises.unlink(curriculumFile);
-      }
+    if (!curriculumFile) {
+    curriculumPath = client.resume;
+    } else {
+    if (client.resume && fs.existsSync(client.resume)) {
+      await fs.promises.unlink(client.resume);
+    }
+    curriculumPath = curriculumFile;
+    }
 
       var { name, age, level, job } = data;
 
@@ -202,7 +208,7 @@ class clientService {
     } catch (err) {
       if (profileFile && fs.existsSync(profileFile)) {
         await fs.promises.unlink(profileFile);
-      }
+      } 
       if (curriculumFile && fs.existsSync(curriculumFile)) {
         await fs.promises.unlink(curriculumFile);
       }
