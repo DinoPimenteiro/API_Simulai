@@ -1,69 +1,264 @@
-# Rotas da API
+# API Documentation
 
-## Rotas de gerenciamento de usuários
+## Table of Contents
 
-### GET("/users")
+- [Authentication](#authentication)
+- [Admin Routes](#admin-routes)
+- [Client Routes](#client-routes)
+- [Auth Routes](#auth-routes)
 
-- Lista todos os usuários;
+## Authentication
 
-### GET("/user/:id")
+Most endpoints require authentication via JWT token in the Authorization header:
 
-- Retorna os dados de um usuário;
-- Requer o ID passado na URI;
+```http
+Authorization: Bearer <token>
+```
 
-### POST("/user")
+## Admin Routes
 
-- Cadastra um novo usuário;
-- Precisa dos campos de email, name, password e age;
+### Register Admin
 
-### DELETE("/user/:id")
+```http
+POST /admin/register
+```
 
-- Deleta um usuário;
-- Requer o ID do usuário passado na URI;
+**Request Body:**
 
-### PUT("/user/:id")
+```json
+{
+  "name": "string",
+  "email": "string",
+  "password": "string"
+}
+```
 
-- Necessita de autenticação (Login/Refresh);
-- Edita um usuário;
-- Requer o id do usuário na URI, um email e uma senha válidos e os dados a serem editados, eles podem ser:  name, age, level e/ou job;
-- Retorna o usuário encontrado;
+**Responses:**
 
-### POST("/user/comment")
+- `201` - Admin created successfully
+- `400` - Invalid input data
+- `409` - Email already registered
 
-- Necessita de autenticação (Login/Refresh);
-- Anexa um comentário a um usuário;
+### Login Admin
 
-## Rotas de Autenticação
+```http
+POST /admin/login
+```
 
-### POST("/login")
+**Request Body:**
 
-- Realiza a autenticação do usuário;
+```json
+{
+  "email": "string",
+  "password": "string"
+}
+```
 
-- Necessita de email e senha passado no **corpo** da requisição;
-- Retorna o token de acesso e o refresh token no cookie ou no secureStorage (mobile);
+**Responses:**
 
-### PUT("/refresh")
+- `200` - Login successful
 
-- Atualiza o AcessToken (Token de curto prazo);
+  ```json
+  {
+    "token": "string",
+    "refreshToken": "string"
+  }
+  ```
 
-- Requer o refresh token passado no cookie ou secureStorage;
-- Responde com um novo token no cookie (ou secureStorage) e o refreshToken atualizado;
+- `401` - Invalid credentials
+- `404` - Admin not found
 
-### DELETE("/logout")
+### Send Invite
 
-- Necessita de autenticação (Login/Refresh);
-- Encerra todas as sessões do usuário;
+```http
+POST /admin/invite
+```
 
-### POST ("/recover-mail")
+**Authorization Required:** Yes
 
-- Envia email com o código de recuperação de acesso (consultar as variáveis de ambiente (.env));
+**Request Body:**
 
-### POST ("/recover-mail/valid")
+```json
+{
+  "email": "string"
+}
+```
 
-- Endpoint para confirmação do código que foi enviado no email;
+**Responses:**
 
-### PUT ("/reset-password")
+- `200` - Invite sent successfully
+- `400` - Invalid email
+- `401` - Unauthorized
+- `500` - Server error
 
-- Necessita de autenticação;
+## Client Routes
 
-- Pede a nova senha;
+### Register Client
+
+```http
+POST /client/register
+```
+
+**Request Body:**
+
+```json
+{
+  "name": "string",
+  "email": "string",
+  "password": "string",
+  "inviteToken": "string"
+}
+```
+
+**Responses:**
+
+- `201` - Client registered successfully
+- `400` - Invalid input data
+- `401` - Invalid invite token
+- `409` - Email already registered
+
+### Login Client
+
+```http
+POST /client/login
+```
+
+**Request Body:**
+
+```json
+{
+  "email": "string",
+  "password": "string"
+}
+```
+
+**Responses:**
+
+- `200` - Login successful
+
+  ```json
+  {
+    "token": "string",
+    "refreshToken": "string"
+  }
+  ```
+
+- `401` - Invalid credentials
+- `404` - Client not found
+
+### Update Profile
+
+```http
+PUT /client/profile
+```
+
+**Authorization Required:** Yes
+
+**Request Body:**
+
+```json
+{
+  "name": "string",
+  "email": "string"
+}
+```
+
+**Responses:**
+
+- `200` - Profile updated successfully
+- `400` - Invalid input data
+- `401` - Unauthorized
+- `404` - Client not found
+
+## Auth Routes
+
+### Refresh Token
+
+```http
+POST /auth/refresh-token
+```
+
+**Request Body:**
+
+```json
+{
+  "refreshToken": "string"
+}
+```
+
+**Responses:**
+
+- `200` - New token generated
+
+  ```json
+  {
+    "token": "string",
+    "refreshToken": "string"
+  }
+  ```
+
+- `401` - Invalid refresh token
+- `404` - Refresh token not found
+
+### Forgot Password
+
+```http
+POST /auth/forgot-password
+```
+
+**Request Body:**
+
+```json
+{
+  "email": "string"
+}
+```
+
+**Responses:**
+
+- `200` - Password reset email sent
+- `404` - User not found
+- `500` - Server error
+
+### Reset Password
+
+```http
+POST /auth/reset-password
+```
+
+**Request Body:**
+
+```json
+{
+  "token": "string",
+  "password": "string"
+}
+```
+
+**Responses:**
+
+- `200` - Password reset successful
+- `400` - Invalid token
+- `404` - User not found
+
+## Error Responses
+
+All endpoints may return these error responses:
+
+```json
+{
+  "error": {
+    "message": "Error message description",
+    "code": "ERROR_CODE"
+  }
+}
+```
+
+Common error codes:
+
+- `400` - Bad Request
+- `401` - Unauthorized
+- `403` - Forbidden
+- `404` - Not Found
+- `409` - Conflict
+- `500` - Internal Server Error
