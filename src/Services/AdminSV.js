@@ -104,8 +104,8 @@ class adminService {
         throw new Error("Invalid Status.");
       }
 
-      if(!userId || !commentId){
-        throw new Error("Missing parameters")
+      if (!userId || !commentId) {
+        throw new Error("Missing parameters");
       }
 
       const updatedComment = await ClientRepo.updateComment(
@@ -151,7 +151,7 @@ class adminService {
     try {
       const id = adminId;
 
-      if(!id) throw new Error("Missing ID")
+      if (!id) throw new Error("Missing ID");
 
       const exist = await AdminRepo.findById(id);
 

@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import transporter from "../config/mailConfig.js";
 import InviteTokenRepo from "../Repositories/InviteTokenRepo.js";
 import { generateTotp } from "../config/2FAConfig.js";
@@ -9,7 +10,7 @@ const ROUTE = "/admin/register/";
 class mailService {
   async recoverEmail(userMail) {
     generalValidations.validateEmail(userMail);
-    const code = Math.floor(1000 + Math.random() * 9000);
+    const code = crypto.randomInt(100000, 999999);
 
     const body = {
       from: process.env.CLIENT_ID,

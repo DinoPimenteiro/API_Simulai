@@ -178,7 +178,7 @@ class AdminAuthService {
         passwordHash,
         age,
         secret: newAdm.secret,
-        role: "Manager",
+        role: "Manager",  
       });
 
       newAdm.used = true;
@@ -186,7 +186,7 @@ class AdminAuthService {
 
       let { secret, ...info } = newManager;
 
-      return info.toObject() || newManager;
+      return newManager.toObject() || "Sucessful created";
     } catch (err) {
       throw err;
     }

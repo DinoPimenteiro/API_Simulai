@@ -6,19 +6,19 @@ import authController from "../Controllers/authController.js";
 
 const router = Router();
 
-router.post("/user", uploadUserFiles, clientController.newClient);
-router.get("/user/:id", authUser, clientController.getOne);
-router.put("/user/:id", uploadUserFiles, authUser, clientController.updateUser);
-router.post("/user/comment/:id", authUser, clientController.comment);
-router.delete("/user/:userId/comment/:commentId", authUser, clientController.deleteComment);
+router.post("/user", uploadUserFiles, clientController.newClient); //TESTADO
+router.get("/user/:id", authUser, clientController.getOne); //TESTADO
+router.put("/user/:id", uploadUserFiles, authUser, clientController.updateUser); // TESTADO
+router.post("/user/comment/:id", authUser, clientController.comment); // TESTADO
+router.delete("/user/:userId/comment/:commentId", authUser, clientController.deleteComment); // TESTADO
 
-router.post("/recover-mail", authController.recoverMail);
-router.post("/recover-mail/valid", authController.validCodeMail);
-router.put("/reset-password/:id", authUser, authController.resetPass);
-router.post("/contact", clientController.contactMail);
+router.post("/recover-mail", authController.recoverMail); // TESTADO
+router.post("/recover-mail/valid", authController.validCodeMail); //TESTADO
+router.put("/reset-password/:id", authUser, authController.resetPass); //TESTADO
+router.post("/contact", clientController.contactMail); // TESTADO
 
-router.get("/metrics", clientController.clientsMetrics);
-router.get("/users", clientController.getAll);
-router.delete("/user/:id", authUser, clientController.deleteUser);
+router.get("/metrics", clientController.clientsMetrics); //TESTADO
+router.get("/users", clientController.getAll); // TESTADO
+router.delete("/user/:id", authUser, clientController.deleteUser); //TESTADO
 
 export default router;

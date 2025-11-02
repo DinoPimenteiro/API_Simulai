@@ -5,16 +5,16 @@ import authController from "../Controllers/authController.js";
 
 const router = Router();
 
-router.post("/admin/register", adminController.register);
-router.get("/admin/comment", authAdmin, adminController.getAllComments);
-router.get("/admin/comment/evaluation", authAdmin, adminController.getEvaluationComments);
-router.get("/admin/comment/help", authAdmin, adminController.getHelpComments);
+router.post("/admin/register", adminController.register); // TESTADO
+router.get("/admin/comment", authAdmin, adminController.getAllComments); //TESTADO
+router.get("/admin/comment/evaluation", authAdmin, adminController.getEvaluationComments); // TESTADO
+router.get("/admin/comment/help", authAdmin, adminController.getHelpComments); // TESTADO
 
-router.put("/admin/user/:userId/comment/:commentId/status", authAdmin, adminController.commentStatus);
-router.delete("/admin/user/:userId/comment/:commentId", authAdmin,adminController.deleteComment);
+router.put("/admin/user/:userId/comment/:commentId/status", authAdmin, adminController.commentStatus); //TESTADO
+router.delete("/admin/user/:userId/comment/:commentId", authAdmin,adminController.deleteComment); // TESTADO
 
-router.post("/admin/invite", authAdmin, authController.recruitMail);
-router.get("/admins", authAdmin, adminController.getAllAdmin);
-router.delete("/admin/:id", authAdmin, adminController.deleteAdmin);
-
+router.post("/admin/invite", authAdmin, authController.recruitMail); // TESTADO
+router.get("/admins", authAdmin, adminController.getAllAdmin); // TESTADO
+router.delete("/admin/:id", authAdmin, adminController.deleteAdmin); // TESTADO
+ 
 export default router;

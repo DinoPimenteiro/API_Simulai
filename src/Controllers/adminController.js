@@ -131,6 +131,10 @@ class adminController {
         return sendError(res, "unauthorized role", 403, errors.unauthorized);
       }
 
+      if (req.params.id === req.admin.id || req.admin?.role === "Boss") {
+        return sendError(res, "unauthorized role", 403, errors.unauthorized);
+      }
+
       const deleted = await adminService.deleteAdmin(req.params.id);
 
       if (deleted) {
