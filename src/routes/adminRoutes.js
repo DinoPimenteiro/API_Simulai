@@ -7,8 +7,8 @@ const router = Router();
 
 router.post("/admin/register", adminController.register); // TESTADO
 router.get("/admin/comment", authAdmin, adminController.getAllComments); //TESTADO
-router.get("/admin/comment/evaluation", authAdmin, adminController.getEvaluationComments); // TESTADO
-router.get("/admin/comment/help", authAdmin, adminController.getHelpComments); // TESTADO
+router.get("/comment/evaluation", adminController.getEvaluationComments); // TESTADO
+router.get("/comment/help", adminController.getHelpComments); // TESTADO
 
 router.put("/admin/user/:userId/comment/:commentId/status", authAdmin, adminController.commentStatus); //TESTADO
 router.delete("/admin/user/:userId/comment/:commentId", authAdmin,adminController.deleteComment); // TESTADO

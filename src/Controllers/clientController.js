@@ -1,7 +1,7 @@
 import clientService from "../Services/ClientSV.js";
 import mailService from "../Services/MailSV.js";
 import { sendError, errors } from "../utils/sendError.js";
-import fs from 'fs';
+import fs from "fs";
 
 class clientController {
   async newClient(req, res) {
@@ -15,7 +15,7 @@ class clientController {
         req.body,
         profilePath,
         resumePath,
-        req.headers["user-agent"]
+        req.headers["x-client-agent"]
       );
 
       const rawToken = newUser.acessCredentials;
@@ -23,6 +23,9 @@ class clientController {
       if (rawToken) {
         res.cookie("refreshToken", rawToken.rawToken, {
           maxAge: 7 * 24 * 60 * 60 * 1000,
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
         });
       } else {
         return sendError(res, "missing token", 400, errors.auth);
@@ -34,6 +37,7 @@ class clientController {
         sendError(res, "failed to create user", 400, errors.data);
       }
     } catch (err) {
+      console.log(err.message);
       sendError(res, err.message, 500, errors.internal);
     }
   }
@@ -91,7 +95,6 @@ class clientController {
         );
         res.status(200).json({ success: true, data: userUpdated });
       } else {
-        
         if (fs.existsSync(profilePath)) {
           await fs.promises.unlink(profilePath);
         }

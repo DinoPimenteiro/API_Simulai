@@ -17,7 +17,6 @@ class TokenAuthService {
       GeneralValidations.validateDevice(device);
       const refreshToken = await RefreshTokenRepo.findByToken(rawk);
 
-      let a = cryptoHash(rawk);
       // Dá pra pôr validação por tempo também. Seria bom.
       if (!refreshToken) throw new Error("Invalid token.");
 
@@ -45,8 +44,8 @@ class TokenAuthService {
         type: refreshToken.type,
         role: refreshToken.role,
         device: device,
-        token: hashedToken,
-        expiresAt: null,
+        token: hashedToken, 
+        expiresAt: refreshToken.expiresAt,
       };
 
       const updatedToken = await RefreshTokenRepo.refreshToken(

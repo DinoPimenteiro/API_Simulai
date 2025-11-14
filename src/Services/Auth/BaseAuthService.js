@@ -4,7 +4,7 @@ import RefreshTokenRepo from "../../Repositories/RfshTokenRepo.js";
 import ClientRepo from "../../Repositories/ClientRepo.js";
 import AdminRepo from "../../Repositories/AdminRepo.js";
 import ClientAuthService from "./ClientAuthService.js";
-import { ComparePass } from "../../utils/hashUtils.js";
+import { ComparePass, cryptoHash } from "../../utils/hashUtils.js";
 import GeneralValidations from "../../utils/generalValidations.js";
 import AdminAuthService from "./AdminAuthService.js";
 
@@ -88,12 +88,11 @@ class AuthService {
   // rawToken
   // updatedToken
   chooseAccount(admin, client) {
-
     return {
       message: {
         admin: `${process.env.APP_URL}/admin/login/${admin._id}`,
         client: `${process.env.APP_URL}/user/login/${client.id}`,
-      }
+      },
     };
   }
 
@@ -145,7 +144,7 @@ class AuthService {
         throw new Error("Token type must be recover-mail");
       }
 
-      if (code === userToken.recoveryCode) {
+      if (parseInt(code) === userToken.recoveryCode) {
         const payload = {
           id: userToken.userId,
           email: userToken.userEmail,

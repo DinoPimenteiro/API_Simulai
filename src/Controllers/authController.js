@@ -11,7 +11,7 @@ class authController {
     try {
       const data = await AuthService.authenticate(
         req.body,
-        req.headers["user-agent"]
+        req.headers["x-client-agent"]
       );
 
       if (data.message) {
@@ -21,6 +21,10 @@ class authController {
       if (data.rawToken) {
         res.cookie("refreshToken", data.rawToken, {
           maxAge: 7 * 24 * 60 * 60 * 1000,
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+          path: "/", // essencial para consistência e limpeza posterior
         });
       } else {
         return sendError(res, "missing token", 400, errors.auth);
@@ -45,12 +49,15 @@ class authController {
       const { acessToken, rawToken } = await AdminAuthService.validateAdminCode(
         req.params.id,
         req.body,
-        req.headers["user-agent"]
+        req.headers["x-client-agent"]
       );
 
       if (rawToken) {
         res.cookie("refreshToken", rawToken, {
           maxAge: 7 * 24 * 60 * 60 * 1000,
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
         });
       } else {
         return sendError(res, "missing token", 400, errors.auth);
@@ -71,13 +78,16 @@ class authController {
     try {
       const { acessToken, rawToken } = await ClientAuthService.clientLogin(
         req.params.id,
-        req.headers["user-agent"],
+        req.headers["x-client-agent"],
         req.body.password
       );
 
       if (rawToken) {
         res.cookie("refreshToken", rawToken, {
           maxAge: 7 * 24 * 60 * 60 * 1000,
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
         });
       } else {
         return sendError(res, "missing token", 400, errors.auth);
@@ -94,7 +104,7 @@ class authController {
   async refresh(req, res) {
     try {
       const acessCredentials = await TokenAuthService.refresh(
-        req.headers["user-agent"],
+        req.headers["x-client-agent"],
         getToken(req)
       );
 
@@ -103,6 +113,9 @@ class authController {
       if (rawToken) {
         res.cookie("refreshToken", rawToken, {
           maxAge: updatedToken.expiresAt,
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
         });
         return res.status(200).json({
           success: true,
@@ -120,6 +133,11 @@ class authController {
       const destroyedSession = await AuthService.logout(getToken(req));
 
       if (destroyedSession) {
+        res.clearCookie("refreshToken", {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+        });
         return res.status(200).json({
           success: true,
           message: "session successfully terminated",
@@ -136,13 +154,18 @@ class authController {
     try {
       const { refreshTk, rawToken } = await MailAuthService.recoveryMail(
         req.body,
-        req.headers["user-agent"]
+        req.headers["x-client-agent"]
       );
 
       if (refreshTk) {
         res.cookie("refreshToken", rawToken, {
-          maxAge: 8 * 60 * 1000,
+          maxAge: 8 * 60 * 1000, // 8 minutos
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+          path: "/", // essencial para consistência e limpeza posterior
         });
+
         return res.status(200).json({
           success: true,
           data: refreshTk,
@@ -157,11 +180,12 @@ class authController {
 
   async validCodeMail(req, res) {
     try {
-      const acessTk = await AuthService.verifyCode(req.body, getToken(req));
+      const token = await AuthService.verifyCode(req.body, getToken(req));
 
-      if (acessTk) {
-        return res.status(200).json({ success: true, data: acessTk });
+      if (token) {
+        return res.status(200).json({ success: true, data: token });
       }
+
       return sendError(res, "access token not found", 404, errors.auth);
     } catch (err) {
       return sendError(res, err.message, 500, errors.internal);
@@ -210,7 +234,7 @@ class authController {
     try {
       const newManager = await AdminAuthService.authenticateAdmin(
         req.params,
-        req.headers["user-agent"],
+        req.headers["x-client-agent"],
         req.body
       );
 

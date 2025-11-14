@@ -1,21 +1,25 @@
-# API Documentation
+# Documentação da API
 
-## Table of Contents
+## Separação das Rotas
 
 - [Authentication](#authentication)
-- [Admin Routes](#admin-routes)
-- [Client Routes](#client-routes)
+- [Rotas de Admin](#rotas-de-admin)
+- [Rotas de Cliente](#rotas-de-cliente)
 - [Auth Routes](#auth-routes)
 
 ## Authentication
 
-Most endpoints require authentication via JWT token in the Authorization header:
+Muitos endpoints (rotas) precisam de autenticação. No cabeçalho da requisição é necessário passar um token JWT neste formato:
 
 ```http
 Authorization: Bearer <token>
 ```
 
-## Admin Routes
+## Indicador de Sucesso
+
+Todos os endpoints retornam um resultado boolean guardado no espaço success. Sempre que for bem sucedido `success = true` se não `success = false`
+
+## Rotas de Admin
 
 ### Register Admin
 
@@ -29,6 +33,7 @@ POST /admin/register
 {
   "name": "string",
   "email": "string",
+  "age": "integer",
   "password": "string"
 }
 ```
@@ -36,13 +41,60 @@ POST /admin/register
 **Responses:**
 
 - `201` - Admin created successfully
-- `400` - Invalid input data
-- `409` - Email already registered
+
+```json
+{
+  "success": true,
+  "data": {
+    "newAdmin": {
+      "id": "hexadecimal",
+      "name": "string",
+      "email": "string",
+      "age": "integer",
+      "role": "string"
+    }
+  }
+}
+```
+
+- `500` - Internal error
+
+### Get All Comments
+
+```http
+GET /admin/comment
+```
+
+**Authorization Required:** Yes
+
+```json
+{
+  "_id": "hexadecimal",
+  "name": "string",
+  "email": "string",
+  "comments": [
+    {
+      "type": "string/Feedback || Evaluation",
+      "text": "string",
+      "date": "date"
+    },
+    {
+      "type": "string/Feedback || Evaluation",
+      "text": "string",
+      "date": "date"
+    }
+  ]
+}
+```
+
+**Responses:**
+
+- `200` - Login successful
 
 ### Login Admin
 
 ```http
-POST /admin/login
+POST /admin/login/:id
 ```
 
 **Request Body:**
@@ -60,7 +112,8 @@ POST /admin/login
 
   ```json
   {
-    "token": "string",
+    "acessToken": "string/JWT token",
+    "rawToken": "string",
     "refreshToken": "string"
   }
   ```
@@ -91,12 +144,12 @@ POST /admin/invite
 - `401` - Unauthorized
 - `500` - Server error
 
-## Client Routes
+## Rotas de Cliente
 
 ### Register Client
 
 ```http
-POST /client/register
+POST /user
 ```
 
 **Request Body:**
@@ -175,15 +228,7 @@ PUT /client/profile
 ### Refresh Token
 
 ```http
-POST /auth/refresh-token
-```
-
-**Request Body:**
-
-```json
-{
-  "refreshToken": "string"
-}
+PUT /refresh
 ```
 
 **Responses:**
@@ -193,7 +238,11 @@ POST /auth/refresh-token
   ```json
   {
     "token": "string",
-    "refreshToken": "string"
+    "refreshToken": {
+      "updatedToken": "Object",
+      "acessToken": "string/JWT Token",
+      "rawToken": "refreshToken"
+    }
   }
   ```
 

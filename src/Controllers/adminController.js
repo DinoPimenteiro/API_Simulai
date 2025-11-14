@@ -6,7 +6,7 @@ class adminController {
     try {
       const newAdmin = await adminService.register(req.body);
       if (newAdmin) {
-        return res.status(200).json({
+        return res.status(201).json({
           success: true,
           data: newAdmin,
         });
