@@ -211,13 +211,13 @@ class authController {
 
   async recruitMail(req, res) {
     try {
-      const { invitationaLink } = await MailAuthService.sendRecruitEmail(
+      const { invitationaLink, id } = await MailAuthService.sendRecruitEmail(
         req.body,
         getToken(req)
       );
 
       if (invitationaLink) {
-        return res.status(200).json({ success: true, data: invitationaLink });
+        return res.status(200).json({ success: true, data: {invitationaLink, id} });
       }
       return sendError(
         res,

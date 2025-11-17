@@ -64,7 +64,7 @@ class mailService {
     }
 
     // http://localhost:4000/admin/register/:id
-    const invitationaLink = `${process.env.APP_URL}${ROUTE}${savedInvite._id}`;
+    const invitationaLink = `http://localhost:5173${ROUTE}${savedInvite._id}`;
 
     const body = {
       from: process.env.CLIENT_ID,
@@ -80,6 +80,7 @@ class mailService {
       if (sent.response.length > 0) {
         return {
           invitationaLink,
+          id: savedInvite._id
         };
       }
     } catch (err) {

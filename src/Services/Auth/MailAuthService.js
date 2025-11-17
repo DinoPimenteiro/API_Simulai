@@ -69,10 +69,11 @@ class MailAuthService {
         throw new Error("Unauthorized.");
       }
 
-      const { invitationaLink } = await mailService.recruitEmail(email);
+      const { invitationaLink, id } = await mailService.recruitEmail(email);
 
       return {
         invitationaLink,
+        id,
       };
     } catch (err) {
       throw err;

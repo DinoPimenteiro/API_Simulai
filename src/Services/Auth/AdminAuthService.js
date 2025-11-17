@@ -12,7 +12,7 @@ class AdminAuthService {
       const device = headers;
       const ID = id;
 
-      console.log(ID)
+      console.log(ID);
       const adm = await AdminRepo.findById(ID);
 
       if (!adm) {
@@ -150,26 +150,24 @@ class AdminAuthService {
       if (!device) {
         throw new Error("Missing device.");
       }
-
+      
       // Utilizar o mesmo email que o convite foi utilizado.
       const newAdm = await InviteTokenRepo.findById(id);
 
       if (!newAdm || email !== newAdm.email) {
         throw new Error("Invite admin error");
       }
-
+      
       if (newAdm.used) {
         throw new Error("Invite admin expired");
       }
-
-      //Colocar validação de tempo;'
-
+      
       GeneralValidations.validateEmail(email);
       GeneralValidations.validateAge(age);
       GeneralValidations.validateName(name);
-
+      
       passwordHash = await GeneralValidations.validatePassword(password);
-
+      
       verifyTOTP(newAdm.secret, code);
 
       const newManager = await AdminRepo.save({
@@ -178,7 +176,7 @@ class AdminAuthService {
         passwordHash,
         age,
         secret: newAdm.secret,
-        role: "Manager",  
+        role: "Manager",
       });
 
       newAdm.used = true;
@@ -186,7 +184,10 @@ class AdminAuthService {
 
       let { secret, ...info } = newManager;
 
-      return newManager.toObject() || "Sucessful created";
+      console.log(info.toObject());
+      console.log("a");
+
+      return info.toObject() || "Sucessful created";
     } catch (err) {
       throw err;
     }
