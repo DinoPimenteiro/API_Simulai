@@ -24,9 +24,9 @@ class adminController {
 
   async getAllAdmin(req, res) {
     try {
-      if (req.admin.role !== "Boss") {
-        return sendError(res, "invalid role", 403, errors.unauthorized);
-      }
+      // if (req.admin.role !== "Boss") {
+      //   return sendError(res, "invalid role", 403, errors.unauthorized);
+      // }
 
       const admins = await adminService.getAllAdmins();
 

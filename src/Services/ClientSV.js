@@ -318,8 +318,8 @@ class clientService {
 
       return {
         media: {
-          rate: avgRate,
-          age: avgAge,
+          rate: avgRate.toFixed(2),
+          age: avgAge.toFixed(2),
         },
         age_distribution: {
           _14_18: juvenil,

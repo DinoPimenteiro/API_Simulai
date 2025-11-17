@@ -36,6 +36,7 @@ class ClientRepo {
     return Client.aggregate([
       {
         $project: {
+          _id: 1,
           profileImage: 1,
           name: 1,
           email: 1,

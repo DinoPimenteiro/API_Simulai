@@ -97,8 +97,8 @@ class adminService {
 
   async updateCommentStatus(parametersId, newStatus) {
     try {
-      let { status } = newStatus;
       const { userId, commentId } = parametersId;
+      let { status } = newStatus;
 
       if (!validStatus(status)) {
         throw new Error("Invalid Status.");
