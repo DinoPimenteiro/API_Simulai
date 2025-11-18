@@ -69,8 +69,8 @@ class MailAuthService {
         throw new Error("Unauthorized.");
       }
 
+      console.log("a")
       const { invitationaLink, id } = await mailService.recruitEmail(email);
-
       return {
         invitationaLink,
         id,

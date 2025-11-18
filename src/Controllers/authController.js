@@ -14,8 +14,9 @@ class authController {
         req.headers["x-client-agent"]
       );
 
+      console.log(data);
       if (data.message) {
-        return res.status(300).json(data.message);
+        return res.status(200).json({ message: data.message });
       }
 
       if (data.rawToken) {
@@ -217,7 +218,9 @@ class authController {
       );
 
       if (invitationaLink) {
-        return res.status(200).json({ success: true, data: {invitationaLink, id} });
+        return res
+          .status(200)
+          .json({ success: true, data: { invitationaLink, id } });
       }
       return sendError(
         res,
@@ -239,7 +242,7 @@ class authController {
       );
 
       if (newManager) {
-        return res.status(200).json({ success: true, data: newManager });
+        return res.status(200).json({ success: true, data: { newManager } });
       }
       return sendError(res, "failed to register admin", 400, errors.data);
     } catch (err) {

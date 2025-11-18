@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+import crypto from "crypto";
 import transporter from "../config/mailConfig.js";
 import InviteTokenRepo from "../Repositories/InviteTokenRepo.js";
 import { generateTotp } from "../config/2FAConfig.js";
@@ -80,7 +80,7 @@ class mailService {
       if (sent.response.length > 0) {
         return {
           invitationaLink,
-          id: savedInvite._id
+          id: savedInvite._id,
         };
       }
     } catch (err) {

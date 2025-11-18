@@ -12,7 +12,6 @@ class AdminAuthService {
       const device = headers;
       const ID = id;
 
-      console.log(ID);
       const adm = await AdminRepo.findById(ID);
 
       if (!adm) {
@@ -53,7 +52,7 @@ class AdminAuthService {
           body
         );
 
-        return { updatedToken, acessToken };
+        return { updatedToken, acessToken, rawToken: rawToken };
       }
 
       if (verify) {
@@ -82,6 +81,10 @@ class AdminAuthService {
         throw new Error("Invalid ID");
       }
 
+      if (adm.role !== "Boss") {
+        throw new Error("Invalid Role.");
+      }
+
       GeneralValidations.validateUser(adm);
       GeneralValidations.validateDevice(device);
 
@@ -98,7 +101,6 @@ class AdminAuthService {
 
       if (existToken) {
         await RefreshTokenRepo.refreshToken(existToken._id, body);
-
         return { rawToken, acessToken };
       }
 
@@ -150,24 +152,24 @@ class AdminAuthService {
       if (!device) {
         throw new Error("Missing device.");
       }
-      
+
       // Utilizar o mesmo email que o convite foi utilizado.
       const newAdm = await InviteTokenRepo.findById(id);
 
       if (!newAdm || email !== newAdm.email) {
         throw new Error("Invite admin error");
       }
-      
+
       if (newAdm.used) {
         throw new Error("Invite admin expired");
       }
-      
+
       GeneralValidations.validateEmail(email);
       GeneralValidations.validateAge(age);
       GeneralValidations.validateName(name);
-      
+
       passwordHash = await GeneralValidations.validatePassword(password);
-      
+
       verifyTOTP(newAdm.secret, code);
 
       const newManager = await AdminRepo.save({
@@ -182,13 +184,15 @@ class AdminAuthService {
       newAdm.used = true;
       await newAdm.save();
 
-      let { secret, ...info } = newManager;
+      const managerObject = newManager.toObject
+        ? newManager.toObject()
+        : newManager;
 
-      console.log(info.toObject());
-      console.log("a");
+      let { secret, ...info } = managerObject;
 
-      return info.toObject() || "Sucessful created";
+      return { newManagerIsane: info || "Sucessful created" };
     } catch (err) {
+      console.log(err.message);
       throw err;
     }
   }

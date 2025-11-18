@@ -36,7 +36,7 @@ class AuthService {
               await AdminAuthService.validateBoss(admin._id, device);
             return { acessToken, rawToken };
           } catch (_) {
-            message = `${process.env.APP_URL}/admin/login/${admin._id}`;
+            message = `http://localhost:5173/admin/login/${admin._id}`;
             return { message };
           }
         }
@@ -56,9 +56,14 @@ class AuthService {
           try {
             const { acessToken, rawToken } =
               await AdminAuthService.validateBoss(admin._id, device);
-            return { acessToken, rawToken };
+            if ((acessToken, rawToken)) {
+              return { acessToken, rawToken };
+            } else {
+              message = `http://localhost:5173/admin/login/${admin._id}`;
+              return { message };
+            }
           } catch (_) {
-            message = `${process.env.APP_URL}/admin/login/${admin._id}`;
+            message = `http://localhost:5173/admin/login/${admin._id}`;
             return { message };
           }
         }
