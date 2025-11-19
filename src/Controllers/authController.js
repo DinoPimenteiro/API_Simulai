@@ -14,7 +14,6 @@ class authController {
         req.headers["x-client-agent"]
       );
 
-      console.log(data);
       if (data.message) {
         return res.status(200).json({ message: data.message });
       }

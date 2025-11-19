@@ -99,14 +99,14 @@ class ClientRepo {
 
   async averageRating() {
     const result = await Client.aggregate([
-      { $group: { _id: null, averageRate: { $avg: "$rate" } } },
+      { $unwind: "$comment" },
+      { $group: { _id: null, averageRate: { $avg: "$comment.rating" } } },
     ]);
 
     return result[0]?.averageRate || 0;
   }
 
   // Nivel médio.
-
 }
 
 export default new ClientRepo();

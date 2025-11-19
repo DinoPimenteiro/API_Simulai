@@ -315,6 +315,8 @@ class clientService {
       const juvenil = await ClientRepo.ageFilter(14, 18);
       const adults = await ClientRepo.ageFilter(19, 24);
       const seniors = await ClientRepo.ageFilter(25, 30);
+      const seniorsPlus = await ClientRepo.ageFilter(31, 36);
+      const seniorsDouble = await ClientRepo.ageFilter(37, 42);
 
       return {
         media: {
@@ -322,9 +324,12 @@ class clientService {
           age: avgAge.toFixed(2),
         },
         age_distribution: {
-          _14_18: juvenil,
-          _19_24: adults,
-          _25_30: seniors,
+          z14_18: juvenil,
+          z19_24: adults,
+          z25_30: seniors,
+          z31_36: seniorsPlus,
+          z37_42: seniorsDouble,
+
         },
       };
     } catch (err) {

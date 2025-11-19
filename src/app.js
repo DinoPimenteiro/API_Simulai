@@ -11,10 +11,17 @@ const app = e();
 app.use(e.json());
 app.use(e.urlencoded({ extended: true }));
 app.use(cookieParser());
+
 app.use(
   cors({
-    origin: "http://localhost:5173", // ou o domínio do seu frontend
-    credentials: true, // permite envio de cookies
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:5174", // Web
+      "*", // Mobile (React Native sem origem)
+    ],
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization", "x-client-agent"],
   })
 );
 
