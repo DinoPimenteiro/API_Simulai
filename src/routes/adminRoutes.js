@@ -21,6 +21,7 @@ router.delete(
 
 router.post("/admin/invite", authController.recruitMail); // TESTADO
 router.get("/admins", adminController.getAllAdmin); // TESTADO
+router.get("/admin/:id", adminController.getOneAdmin); // TESTADO
 router.delete("/admin/:id", authAdmin, adminController.deleteAdmin); // TESTADO
 
 export default router;

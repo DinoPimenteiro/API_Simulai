@@ -89,6 +89,7 @@ class clientService {
     try {
       const user = await ClientRepo.findID(id);
 
+      console.log(user);
       GeneralValidations.validateUser(user);
 
       return {
@@ -146,22 +147,22 @@ class clientService {
 
     try {
       if (!profileFile) {
-      profileImagePath = client.profileImage;
+        profileImagePath = client.profileImage;
       } else {
-      if (client.profileImage && fs.existsSync(client.profileImage)) {
+        if (client.profileImage && fs.existsSync(client.profileImage)) {
           await fs.promises.unlink(client.profileImage);
+        }
+        profileImagePath = profileFile;
       }
-       profileImagePath = profileFile;
-      } 
 
-    if (!curriculumFile) {
-    curriculumPath = client.resume;
-    } else {
-    if (client.resume && fs.existsSync(client.resume)) {
-      await fs.promises.unlink(client.resume);
-    }
-    curriculumPath = curriculumFile;
-    }
+      if (!curriculumFile) {
+        curriculumPath = client.resume;
+      } else {
+        if (client.resume && fs.existsSync(client.resume)) {
+          await fs.promises.unlink(client.resume);
+        }
+        curriculumPath = curriculumFile;
+      }
 
       var { name, age, level, job } = data;
 
@@ -208,7 +209,7 @@ class clientService {
     } catch (err) {
       if (profileFile && fs.existsSync(profileFile)) {
         await fs.promises.unlink(profileFile);
-      } 
+      }
       if (curriculumFile && fs.existsSync(curriculumFile)) {
         await fs.promises.unlink(curriculumFile);
       }
@@ -329,7 +330,6 @@ class clientService {
           z25_30: seniors,
           z31_36: seniorsPlus,
           z37_42: seniorsDouble,
-
         },
       };
     } catch (err) {

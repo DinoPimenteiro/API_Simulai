@@ -51,3 +51,4 @@ const commentStatus = ["Aprovado", "Pendente", "Rejeitado"];
 const Client = mongoose.model("client", ClientSchema);
 
 export { Client, userLevel, commentType, commentStatus };
+  

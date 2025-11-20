@@ -147,6 +147,21 @@ class adminService {
     }
   }
 
+  async selectOne(id) {
+    try {
+      if (!id) {
+        throw new Error("Missing ID");
+      }
+      const admin = await AdminRepo.getOne(id);
+
+      if (!admin) throw new Error("Not possible to list admin.");
+
+      return admin;
+    } catch (err) {
+      throw err;
+    }
+  }
+
   async deleteAdmin(adminId) {
     try {
       const id = adminId;

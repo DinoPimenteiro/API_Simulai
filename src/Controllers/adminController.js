@@ -24,9 +24,9 @@ class adminController {
 
   async getAllAdmin(req, res) {
     try {
-      // if (req.admin.role !== "Boss") {
-      //   return sendError(res, "invalid role", 403, errors.unauthorized);
-      // }
+      if (req.admin.role !== "Boss") {
+        return sendError(res, "invalid role", 403, errors.unauthorized);
+      }
 
       const admins = await adminService.getAllAdmins();
 
@@ -141,6 +141,19 @@ class adminController {
         return res.status(200).json({ success: true, data: deleted });
       }
       return sendError(res, "not possible to delete admin", 404, errors.data);
+    } catch (err) {
+      return sendError(res, err.message, 500, errors.internal);
+    }
+  }
+
+  async getOneAdmin(req, res) {
+    try {
+      if (req.admin.id === req.params.id) {
+        const user = await adminService.selectOne(req.params.id);
+        res.status(200).json({ success: true, data: user });
+      } else {
+        return sendError(res, "unauthorized access", 401, errors.unauthorized);
+      }
     } catch (err) {
       return sendError(res, err.message, 500, errors.internal);
     }

@@ -21,7 +21,7 @@ class MailAuthService {
       const existsToken = await RefreshTokenRepo.findByUserEmail(user.email);
 
       if (existsToken.length > 0) {
-        await RefreshTokenRepo.destroyManyTokens(user._id);
+        await RefreshTokenRepo.destroyManyTokens(user._id); 
       }
 
       const { code } = await mailService.recoverEmail(email);
@@ -40,6 +40,7 @@ class MailAuthService {
           return {
             refreshTk,
             rawToken,
+            userId: user._id
           };
         }
       } else {
