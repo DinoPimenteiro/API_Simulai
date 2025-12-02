@@ -89,7 +89,6 @@ class clientService {
     try {
       const user = await ClientRepo.findID(id);
 
-      console.log(user);
       GeneralValidations.validateUser(user);
 
       return {

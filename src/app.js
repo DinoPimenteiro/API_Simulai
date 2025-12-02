@@ -4,6 +4,7 @@ import cors from "cors";
 import userRouter from "./routes/clientRoutes.js";
 import authRouter from "./routes/authRoutes.js";
 import adminRouter from "./routes/adminRoutes.js";
+import interviewRouter from "./routes/interviewRoutes.js";
 
 const app = e();
 
@@ -29,5 +30,6 @@ app.use(
 app.use(userRouter);
 app.use(authRouter);
 app.use(adminRouter);
+app.use(interviewRouter);
 
 export default app;
