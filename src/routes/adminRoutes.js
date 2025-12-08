@@ -12,16 +12,18 @@ router.get("/comment/help", adminController.getHelpComments); // TESTADO
 
 router.put(
   "/admin/user/:userId/comment/:commentId/status",
+  authAdmin,
   adminController.commentStatus
 ); //TESTADO
 router.delete(
   "/admin/user/:userId/comment/:commentId",
+  authAdmin,
   adminController.deleteComment
 ); // TESTADO
 
-router.post("/admin/invite", authController.recruitMail); // TESTADO
-router.get("/admins", adminController.getAllAdmin); // TESTADO
-router.get("/admin/:id", adminController.getOneAdmin); // TESTADO
+router.post("/admin/invite", authAdmin, authController.recruitMail); // TESTADO
+router.get("/admins", authAdmin, adminController.getAllAdmin); // TESTADO
+router.get("/admin/:id", authAdmin, adminController.getOneAdmin); // TESTADO
 router.delete("/admin/:id", authAdmin, adminController.deleteAdmin); // TESTADO
 
 export default router;

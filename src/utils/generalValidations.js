@@ -3,6 +3,14 @@ import { PassHash } from "./hashUtils.js";
 import fs from "fs";
 
 class GeneralValidations {
+  validateId(id) {
+    if (!id || typeof id !== "string" || !validator.isHexadecimal(id)) {
+      throw new Error("ID de usuário inválido.");
+    }
+
+    return true;
+  }
+
   async validatePassword(password) {
     let passwordHash;
 

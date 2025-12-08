@@ -158,7 +158,7 @@ class AuthService {
         };
 
         const acessToken = jwt.sign(payload, process.env.JWT_SECRET, {
-          expiresIn: "15m",
+          expiresIn: "25m",
         });
 
         return { acessToken, id: userToken.userId };

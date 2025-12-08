@@ -169,6 +169,7 @@ class authController {
         return res.status(200).json({
           success: true,
           data: refreshTk,
+          rawToken: rawToken,
           message: `E-mail enviado de recuperação enviado para ${refreshTk.userEmail}`,
         });
       }

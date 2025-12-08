@@ -6,6 +6,7 @@ import { Capitalize } from "../utils/stringUtils.js";
 import { ValidLevel, validComment } from "../utils/userValidator.js";
 import GeneralValidations from "../utils/generalValidations.js";
 import fs from "fs";
+import InterviewRepo from "../Repositories/InterviewRepo.js";
 
 class clientService {
   async register(data, profileFile, curriculumFile, headers) {
@@ -121,11 +122,13 @@ class clientService {
       }
 
       const userSessions = await RefreshTokenRepo.destroyManyTokens(id);
+      const allInterviews = await InterviewRepo.deleteAllByUser(id)
       const deleted = await ClientRepo.destroy(id);
 
       if (deleted) {
         return {
           userDeleted: deleted,
+          DeletedInterviews: allInterviews,
           DeletedSessions: userSessions,
         };
       }
@@ -317,6 +320,7 @@ class clientService {
       const seniors = await ClientRepo.ageFilter(25, 30);
       const seniorsPlus = await ClientRepo.ageFilter(31, 36);
       const seniorsDouble = await ClientRepo.ageFilter(37, 42);
+      
 
       return {
         media: {

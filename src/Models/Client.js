@@ -41,6 +41,7 @@ const ClientSchema = new Schema({
     type: String,
     default: null,
   },
+  
   comment: [CommentSchema],
 });
 
@@ -51,4 +52,3 @@ const commentStatus = ["Aprovado", "Pendente", "Rejeitado"];
 const Client = mongoose.model("client", ClientSchema);
 
 export { Client, userLevel, commentType, commentStatus };
-  

@@ -18,7 +18,7 @@ class ClientRepo {
   }
 
   async update(id, data) {
-    return Client.findByIdAndUpdate(id, data);
+    return Client.findByIdAndUpdate(id, data, { new: true });
   }
 
   async save(data) {

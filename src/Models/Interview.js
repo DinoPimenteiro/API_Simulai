@@ -7,7 +7,7 @@ const CompetenciasSchema = new Schema({
   coerencia: { type: Number, min: 0, max: 10, required: true },
   comunicacao: { type: Number, min: 0, max: 10, required: true },
   clareza: { type: Number, min: 0, max: 10, required: true }
-}, { _id: false }); // evita criar um _id interno
+}, { _id: false }); 
 
 const interviewSchema = new Schema(
   {

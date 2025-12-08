@@ -32,7 +32,7 @@ class TokenAuthService {
       };
 
       const acessToken = jwt.sign(payload, process.env.JWT_SECRET, {
-        expiresIn: "15m",
+        expiresIn: "35m",
       });
 
       const rawToken = crypto.randomBytes(40).toString("hex");

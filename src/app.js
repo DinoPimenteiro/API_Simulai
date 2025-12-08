@@ -5,13 +5,27 @@ import userRouter from "./routes/clientRoutes.js";
 import authRouter from "./routes/authRoutes.js";
 import adminRouter from "./routes/adminRoutes.js";
 import interviewRouter from "./routes/interviewRoutes.js";
+import path from "path";
+import { fileURLToPath } from "url";
 
 const app = e();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// app.use((req, res, next) => {
+//   if (req.path === "/transcrever-texto") {
+//     return e.raw({ type: "*/*" })(req, res, next);
+//   }
+//   next();
+// });
 
 // Config
 app.use(e.json());
 app.use(e.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+app.use("/uploads", e.static(path.join(__dirname, "..", "uploads")));
 
 app.use(
   cors({

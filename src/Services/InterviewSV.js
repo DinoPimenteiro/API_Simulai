@@ -1,9 +1,13 @@
+import fs from "fs";
 import validator from "validator";
 import { api } from "../config/axiosConfig.js";
 import InterviewRepo from "../Repositories/InterviewRepo.js";
 import ClientRepo from "../Repositories/ClientRepo.js";
 import FormData from "form-data";
 import { Readable } from "stream";
+import { Capitalize } from "../utils/stringUtils.js";
+import { openai } from "../config/openaiConfig.js";
+import generalValidations from "../utils/generalValidations.js";
 
 class InterviewService {
   async ReadFile(id, cargo, file) {
@@ -27,11 +31,13 @@ class InterviewService {
       throw new Error("Arquivo não fornecido.");
     }
 
+    let job = Capitalize(cargo);
+
     const formData = new FormData();
 
     const filestream = Readable.from(file.buffer);
 
-    formData.append("cargo", cargo);
+    formData.append("cargo", job);
     formData.append("file", filestream, {
       filename: file.originalname,
       contentType: file.mimetype,
@@ -122,15 +128,16 @@ class InterviewService {
         throw new Error("Resposta inválida do servidor.");
       }
     } catch (error) {
-      console.error("AISLDKBSJLK", error.message);
+      console.error("HISTORICO", error.message);
       throw error;
     }
   }
 
   async GenerateReport(reportRequest) {
+    console.log("EXECUTOU");
     if (
       reportRequest == null ||
-      !reportRequest.session_id ||
+      !reportRequest?.session_id ||
       typeof reportRequest.session_id !== "string"
     ) {
       throw new Error("ID de sessão inválido para gerar relatório.");
@@ -140,42 +147,92 @@ class InterviewService {
       const interview = await InterviewRepo.findBySessionId(
         reportRequest.session_id
       );
-      if (!interview) throw new Error("Entrevista não encontrada.");
 
       const res = await api.post(`/gerar_relatorio`, reportRequest);
+
       if (res.data.report) {
         interview.report = res.data.report;
         interview.feedback = res.data.competencias;
         await interview.save();
+
         return res.data;
       } else {
+        console.error("ERRO NO REPORT");
         throw new Error("Resposta inválida do servidor.");
       }
     } catch (err) {
+      console.error("ERRO NO REPORT");
       console.error(err.message);
       throw err;
     }
   }
 
+  // ======================= PASTOR INSANO (E GUEI) ==================================
+  async transcribeAudio(body, file) {
+    try {
+      const { session_id } = body;
+      const audio = file;
+
+      if (!audio) throw new Error("Missing file");
+      if (!session_id) throw new Error("Missing ID");
+
+      try {
+        const response = await openai.audio.transcriptions.create({
+          file: fs.createReadStream(audio?.path),
+          model: "whisper-1",
+          language: "pt",
+        });
+
+        if (response) {
+          return response.text;
+        }
+      } catch (err) {
+        console.error("WHISPER ERROR:", err.message);
+        throw new Error("Erro ao transcrever áudio com Whisper.");
+      }
+    } catch (error) {
+      console.error(error.message);
+      throw error;
+    }
+  }
+
+  async textToSpeech(body) {
+    const { text } = body;
+
+    console.log(text)
+
+    generalValidations.validateName(text, "Invalid text");
+
+    try {
+      const res = await openai.audio.speech.create({
+        model: "gpt-4o-mini-tts",
+        voice: "onyx",
+        input: text,
+      });
+
+      const audio = Buffer.from(await res.arrayBuffer());
+      const base64 = audio.toString('base64')
+
+      return {audio, base64};
+    } catch (err) {
+      console.error(err.message);
+      throw err;
+    }
+  }
   // ======================== COISAS COMUNS ===========================
 
   async getInteviewByUser(userId) {
-    if (
-      !userId ||
-      typeof userId !== "string" ||
-      validator.isHexadecimal(userId) === false
-    ) {
-      throw new Error("ID de usuário inválido.");
-    }
+    generalValidations.validateId(userId);
 
     try {
       const client = await ClientRepo.findID(userId);
-      if (!client) {
-        throw new Error("Cliente não encontrado para o usuário fornecido.");
-      }
+
+      generalValidations.validateUser(client);
+
       const interviews = await InterviewRepo.findByUserId(client._id);
       const parsed = interviews.map((interview) => ({
         session_id: interview.session_id,
+        messages: interview.messages,
         cargo: interview.cargo,
         createdAt: interview.createdAt,
         feedback: interview.feedback,
@@ -183,6 +240,36 @@ class InterviewService {
       }));
       return parsed;
     } catch (error) {
+      console.error(error.message);
+      throw error;
+    }
+  }
+
+  async getInterviewMetrics(userId) {
+    try {
+      generalValidations.validateId(userId);
+
+      const feedbackMetrics = await InterviewRepo.getFeedbackUser(userId);
+      return feedbackMetrics;
+    } catch (err) {
+      console.error(err.message);
+      throw err;
+    }
+  }
+
+  async deleteOneInterview(sessionId) {
+    try {
+      generalValidations.validateId(sessionId);
+
+      const deletedInterview = await InterviewRepo.deleteOne(sessionId);
+
+      if (deletedInterview) {
+        return deletedInterview;
+      } else {
+        throw new Error("Failed to deleted Interview.");
+      }
+    } catch (error) {
+      console.error(error.message);
       throw error;
     }
   }

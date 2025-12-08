@@ -111,6 +111,7 @@ class clientController {
         );
       }
     } catch (err) {
+      console.error(err.message);
       sendError(res, err.message, 500, errors.internal);
     }
   }
