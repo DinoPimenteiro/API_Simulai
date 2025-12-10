@@ -81,7 +81,7 @@ class interviewController {
   async deleteOneInterview(req, res) {
     try {
       const response = await IntervireService.deleteOneInterview(
-        req.params.session_id
+        req.params.userId
       );
 
       if (response) {
@@ -132,4 +132,5 @@ class interviewController {
     }
   }
 }
+
 export default new interviewController();

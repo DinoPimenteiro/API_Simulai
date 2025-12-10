@@ -14,12 +14,16 @@ class InterviewRepo {
     return Interview.find({ user: userId });
   }
 
-  async deleteAllByUser(userId){
-    return Interview.deleteMany({user: userId})
+  async deleteAllByUser(userId) {
+    return Interview.deleteMany({ user: userId });
   }
 
-  async deleteOneByUser(userId){
-    return Interview.findByIdAndDelete({user: userId})
+  async deleteOneByUser(userId) {
+    return Interview.findByIdAndDelete({ user: userId });
+  }
+
+  async deleteOne(session) {
+    return Interview.findOneAndDelete({ session_id: session });
   }
 
   async getFeedbackUser(userId) {

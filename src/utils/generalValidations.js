@@ -11,6 +11,14 @@ class GeneralValidations {
     return true;
   }
 
+  validateSessionId(id) {
+    if (!id || typeof id !== "string") {
+      throw new Error("ID inválido.");
+    }
+
+    return true;
+  }
+
   async validatePassword(password) {
     let passwordHash;
 

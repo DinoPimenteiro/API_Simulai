@@ -39,7 +39,7 @@ router.post(
 );
 
 router.delete(
-  "/delete-interview/:session_id",
+  "/delete-interview/:userId",
   authUser,
   interviewController.deleteOneInterview
 );

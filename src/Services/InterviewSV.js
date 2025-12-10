@@ -134,7 +134,6 @@ class InterviewService {
   }
 
   async GenerateReport(reportRequest) {
-    console.log("EXECUTOU");
     if (
       reportRequest == null ||
       !reportRequest?.session_id ||
@@ -257,11 +256,12 @@ class InterviewService {
     }
   }
 
-  async deleteOneInterview(sessionId) {
+  async deleteOneInterview(userId) {
     try {
-      generalValidations.validateId(sessionId);
+      console.log(userId)
+      generalValidations.validateSessionId(userId);
 
-      const deletedInterview = await InterviewRepo.deleteOne(sessionId);
+      const deletedInterview = await InterviewRepo.deleteOne(userId);
 
       if (deletedInterview) {
         return deletedInterview;
